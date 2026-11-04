@@ -30,7 +30,7 @@ type Validator<T> = (data: unknown) => data is T;
  * Sends an authenticated request to the backend API.
  *
  * Every request automatically:
- * - Attaches the current Supabase access token as a Bearer header
+ * - Attaches the current session token as a Bearer header
  * - Enforces a 30-second timeout via AbortController
  * - Parses JSON and optionally validates the response shape with a type guard
  * - Maps HTTP error codes to friendly messages (400, 401, 409, 5xx)

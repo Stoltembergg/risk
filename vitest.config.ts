@@ -7,6 +7,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			$lib: path.resolve('./src/lib'),
+			'$app/environment': path.resolve('./src/lib/__mocks__/environment.ts'),
 			'$env/static/public': path.resolve('./src/lib/__mocks__/env.ts')
 		}
 	},

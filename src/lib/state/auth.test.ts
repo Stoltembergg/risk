@@ -1,198 +1,114 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '$lib/config/supabase';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { PUBLIC_API_URL } from '$env/static/public';
 
-const mockAuth = vi.mocked(supabase.auth);
+const STORAGE_KEY = 'go-risk-it-session';
+const future = () => new Date(Date.now() + 3_600_000).toISOString();
 
-// Reset mocks before each test and re-import to get fresh module state
 describe('auth', () => {
 	let getAuth: typeof import('./auth.svelte').getAuth;
+	const fetchMock = vi.fn();
 
 	beforeEach(async () => {
 		vi.resetModules();
-		mockAuth.getSession.mockResolvedValue({ data: { session: null }, error: null } as never);
-		mockAuth.onAuthStateChange.mockReturnValue({
-			data: { subscription: { unsubscribe: vi.fn() } }
-		} as never);
-		mockAuth.signInWithPassword.mockReset();
-		mockAuth.signInWithIdToken.mockReset();
-		mockAuth.signUp.mockReset();
-		mockAuth.signOut.mockReset();
-
+		localStorage.clear();
+		fetchMock.mockReset();
+		vi.stubGlobal('fetch', fetchMock);
 		const mod = await import('./auth.svelte');
 		getAuth = mod.getAuth;
-
-		// Wait for init() to complete
-		await vi.waitFor(() => {
-			expect(getAuth().loading).toBe(false);
-		});
 	});
 
-	describe('initial state', () => {
-		it('has no session or user after init with no session', () => {
-			const auth = getAuth();
-			expect(auth.session).toBeNull();
-			expect(auth.user).toBeNull();
-			expect(auth.isAuthenticated).toBe(false);
-			expect(auth.accessToken).toBeNull();
-		});
+	afterEach(() => {
+		vi.unstubAllGlobals();
 	});
 
-	describe('init with existing session', () => {
-		it('loads existing session from supabase', async () => {
-			vi.resetModules();
-			const mockSession = {
-				access_token: 'tok-123',
-				user: { id: 'u1', email: 'a@b.com' }
-			};
-			mockAuth.getSession.mockResolvedValue({
-				data: { session: mockSession },
-				error: null
-			} as never);
-
-			const mod = await import('./auth.svelte');
-			await vi.waitFor(() => {
-				expect(mod.getAuth().loading).toBe(false);
-			});
-
-			const auth = mod.getAuth();
-			expect(auth.isAuthenticated).toBe(true);
-			expect(auth.accessToken).toBe('tok-123');
-			expect(auth.user?.id).toBe('u1');
-		});
+	it('starts unauthenticated', () => {
+		const auth = getAuth();
+		expect(auth.loading).toBe(false);
+		expect(auth.session).toBeNull();
+		expect(auth.user).toBeNull();
+		expect(auth.accessToken).toBeNull();
 	});
 
-	describe('signInWithPassword', () => {
-		it('calls supabase signInWithPassword', async () => {
-			mockAuth.signInWithPassword.mockResolvedValue({ error: null } as never);
-			const auth = getAuth();
-			await auth.signInWithPassword({ email: 'a@b.com', password: 'pass' });
-			expect(mockAuth.signInWithPassword).toHaveBeenCalledWith({
-				email: 'a@b.com',
-				password: 'pass'
-			});
-		});
+	it('restores a valid stored session', async () => {
+		const session = { access_token: 'tok-123', expires_at: future() };
+		const user = { id: 'user-1', name: 'Alice' };
+		localStorage.setItem(STORAGE_KEY, JSON.stringify({ session, user }));
 
-		it('throws on auth error', async () => {
-			mockAuth.signInWithPassword.mockResolvedValue({
-				error: new Error('Invalid credentials')
-			} as never);
-			const auth = getAuth();
-			await expect(auth.signInWithPassword({ email: 'a@b.com', password: 'bad' })).rejects.toThrow(
-				'Invalid credentials'
-			);
-		});
+		vi.resetModules();
+		const mod = await import('./auth.svelte');
+
+		expect(mod.getAuth().accessToken).toBe('tok-123');
+		expect(mod.getAuth().user).toEqual(user);
 	});
 
-	describe('signInWithGoogle', () => {
-		it('calls supabase signInWithIdToken', async () => {
-			mockAuth.signInWithIdToken.mockResolvedValue({ error: null } as never);
-			const auth = getAuth();
-			await auth.signInWithGoogle('google-token');
-			expect(mockAuth.signInWithIdToken).toHaveBeenCalledWith({
-				provider: 'google',
-				token: 'google-token'
-			});
-		});
+	it('drops an expired stored session', async () => {
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				session: { access_token: 'old', expires_at: new Date(Date.now() - 1000).toISOString() },
+				user: { id: 'user-1', name: 'Alice' }
+			})
+		);
 
-		it('throws on auth error', async () => {
-			mockAuth.signInWithIdToken.mockResolvedValue({
-				error: new Error('Invalid token')
-			} as never);
-			const auth = getAuth();
-			await expect(auth.signInWithGoogle('bad-token')).rejects.toThrow('Invalid token');
-		});
+		vi.resetModules();
+		const mod = await import('./auth.svelte');
+
+		expect(mod.getAuth().accessToken).toBeNull();
+		expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 	});
 
-	describe('signUp', () => {
-		it('calls supabase signUp', async () => {
-			mockAuth.signUp.mockResolvedValue({ error: null } as never);
-			const auth = getAuth();
-			await auth.signUp({ email: 'new@b.com', password: 'pass' });
-			expect(mockAuth.signUp).toHaveBeenCalledWith({
-				email: 'new@b.com',
-				password: 'pass'
-			});
+	it('signIn posts the nickname and stores the token', async () => {
+		const expiresAt = future();
+		fetchMock.mockResolvedValue({
+			ok: true,
+			status: 201,
+			json: async () => ({ userId: 'user-1', nickname: 'Alice', token: 'tok-123', expiresAt })
 		});
 
-		it('throws on auth error', async () => {
-			mockAuth.signUp.mockResolvedValue({
-				error: new Error('Email taken')
-			} as never);
-			const auth = getAuth();
-			await expect(auth.signUp({ email: 'dup@b.com', password: 'pass' })).rejects.toThrow(
-				'Email taken'
-			);
-		});
+		await getAuth().signIn(' Alice ');
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			`${PUBLIC_API_URL}/sessions`,
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({ nickname: 'Alice' })
+			})
+		);
+		expect(getAuth().accessToken).toBe('tok-123');
+		expect(getAuth().user).toEqual({ id: 'user-1', name: 'Alice' });
+		expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}').session.access_token).toBe(
+			'tok-123'
+		);
 	});
 
-	describe('signOut', () => {
-		it('calls supabase signOut', async () => {
-			mockAuth.signOut.mockResolvedValue({ error: null } as never);
-			const auth = getAuth();
-			await auth.signOut();
-			expect(mockAuth.signOut).toHaveBeenCalled();
-		});
+	it('signIn rejects an invalid nickname', async () => {
+		fetchMock.mockResolvedValue({ ok: false, status: 400, json: async () => ({}) });
 
-		it('throws on signOut error', async () => {
-			mockAuth.signOut.mockResolvedValue({
-				error: new Error('Network error')
-			} as never);
-			const auth = getAuth();
-			await expect(auth.signOut()).rejects.toThrow('Network error');
-		});
+		await expect(getAuth().signIn(' ')).rejects.toThrow('Enter a valid nickname');
 	});
 
-	describe('onAuthStateChange', () => {
-		it('registers a listener during init', () => {
-			expect(mockAuth.onAuthStateChange).toHaveBeenCalled();
+	it('signIn rejects a malformed session response', async () => {
+		fetchMock.mockResolvedValue({
+			ok: true,
+			status: 201,
+			json: async () => ({ userId: 'user-1', token: 'tok-123' })
 		});
 
-		it('updates session when auth state changes', async () => {
-			vi.resetModules();
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			let authChangeCallback: (...args: any[]) => void = () => {};
-			mockAuth.onAuthStateChange.mockImplementation(((cb: (...args: unknown[]) => void) => {
-				authChangeCallback = cb;
-				return { data: { subscription: { unsubscribe: vi.fn() } } } as never;
-			}) as unknown as typeof mockAuth.onAuthStateChange);
+		await expect(getAuth().signIn('Alice')).rejects.toThrow('Unexpected session response');
+	});
 
-			const mod = await import('./auth.svelte');
-			await vi.waitFor(() => {
-				expect(mod.getAuth().loading).toBe(false);
-			});
-
-			const newSession = {
-				access_token: 'new-tok',
-				user: { id: 'u2', email: 'b@c.com' }
-			};
-			authChangeCallback('SIGNED_IN', newSession);
-
-			const auth = mod.getAuth();
-			expect(auth.isAuthenticated).toBe(true);
-			expect(auth.accessToken).toBe('new-tok');
-			expect(auth.user?.id).toBe('u2');
+	it('signOut clears the session', async () => {
+		fetchMock.mockResolvedValue({
+			ok: true,
+			status: 201,
+			json: async () => ({ userId: 'user-1', token: 'tok-123', expiresAt: future() })
 		});
 
-		it('clears session on sign out event', async () => {
-			vi.resetModules();
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			let authChangeCallback: (...args: any[]) => void = () => {};
-			mockAuth.onAuthStateChange.mockImplementation(((cb: (...args: unknown[]) => void) => {
-				authChangeCallback = cb;
-				return { data: { subscription: { unsubscribe: vi.fn() } } } as never;
-			}) as unknown as typeof mockAuth.onAuthStateChange);
+		await getAuth().signIn('Alice');
+		await getAuth().signOut();
 
-			const mod = await import('./auth.svelte');
-			await vi.waitFor(() => {
-				expect(mod.getAuth().loading).toBe(false);
-			});
-
-			authChangeCallback('SIGNED_OUT', null);
-
-			const auth = mod.getAuth();
-			expect(auth.isAuthenticated).toBe(false);
-			expect(auth.session).toBeNull();
-			expect(auth.user).toBeNull();
-		});
+		expect(getAuth().accessToken).toBeNull();
+		expect(getAuth().user).toBeNull();
+		expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
 	});
 });

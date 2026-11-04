@@ -1,15 +1,11 @@
 <script lang="ts">
-	/**
-	 * Sign-in page with email/password authentication. Redirects already-authenticated
-	 * users to the home page. On successful sign-in, navigates to the lobby hub.
-	 */
+	/** Nickname-based temporary session entry. */
 	import { goto } from '$app/navigation';
 	import { getAuth } from '$lib/state/auth.svelte';
 
 	const auth = getAuth();
 
-	let email = $state('');
-	let password = $state('');
+	let name = $state('');
 	let error = $state('');
 	let submitting = $state(false);
 
@@ -25,7 +21,7 @@
 		error = '';
 		submitting = true;
 		try {
-			await auth.signInWithPassword({ email, password });
+			await auth.signIn(name);
 			goto('/');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Sign in failed';
@@ -37,7 +33,8 @@
 
 <div class="flex min-h-dvh items-center justify-center">
 	<div class="glass w-full max-w-sm rounded-2xl p-8">
-		<h1 class="mb-6 text-center text-2xl font-bold">Sign In</h1>
+		<h1 class="mb-2 text-center text-2xl font-bold">Join the table</h1>
+		<p class="mb-6 text-center text-sm text-gray-400">Choose a nickname to enter Risk.</p>
 
 		{#if error}
 			<div
@@ -50,24 +47,17 @@
 
 		<form onsubmit={handleSubmit} class="space-y-4">
 			<div>
-				<label for="email" class="mb-1 block text-sm text-gray-400">Email</label>
+				<label for="name" class="mb-1 block text-sm text-gray-400">Nickname</label>
 				<input
-					id="email"
-					type="email"
-					bind:value={email}
+					id="name"
+					type="text"
+					bind:value={name}
 					required
+					minlength="1"
+					maxlength="32"
+					autocomplete="nickname"
 					class="w-full rounded-lg bg-surface-700 px-4 py-2.5 text-gray-100 outline-none transition-colors focus:ring-2 focus:ring-accent"
-					placeholder="player@go-risk.it"
-				/>
-			</div>
-			<div>
-				<label for="password" class="mb-1 block text-sm text-gray-400">Password</label>
-				<input
-					id="password"
-					type="password"
-					bind:value={password}
-					required
-					class="w-full rounded-lg bg-surface-700 px-4 py-2.5 text-gray-100 outline-none transition-colors focus:ring-2 focus:ring-accent"
+					placeholder="Your name at the table"
 				/>
 			</div>
 			<button
@@ -76,12 +66,9 @@
 				data-testid="signin-submit"
 				class="w-full cursor-pointer rounded-lg bg-accent py-2.5 font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 			>
-				{submitting ? 'Signing in...' : 'Sign In'}
+				{submitting ? 'Entering...' : 'Enter game'}
 			</button>
 		</form>
 
-		<p class="mt-4 text-center text-sm text-gray-500">
-			No account? <a href="/auth/signup" class="text-accent-light hover:underline">Sign up</a>
-		</p>
 	</div>
 </div>

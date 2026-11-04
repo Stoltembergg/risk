@@ -122,13 +122,13 @@
 				>
 			</h1>
 			<div class="flex items-center gap-4">
-				<span class="text-sm text-gray-400">{auth.user?.email}</span>
+				<span class="text-sm text-gray-400">{auth.user?.name}</span>
 				<button
 					onclick={() => auth.signOut()}
 					data-testid="signout-btn"
 					class="cursor-pointer rounded-lg bg-surface-600 px-3 py-1.5 text-sm transition-colors hover:bg-surface-500"
 				>
-					Sign Out
+					Leave
 				</button>
 			</div>
 		</header>
@@ -141,13 +141,13 @@
 		<header class="glass flex items-center justify-between px-6 py-3">
 			<h1 class="text-xl font-bold tracking-tight">Risk</h1>
 			<div class="flex items-center gap-4">
-				<span class="text-sm text-gray-400">{auth.user?.email}</span>
+				<span class="text-sm text-gray-400">{auth.user?.name}</span>
 				<button
 					onclick={() => auth.signOut()}
 					data-testid="signout-btn"
 					class="cursor-pointer rounded-lg bg-surface-600 px-3 py-1.5 text-sm transition-colors hover:bg-surface-500"
 				>
-					Sign Out
+					Leave
 				</button>
 			</div>
 		</header>

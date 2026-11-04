@@ -1,112 +1,45 @@
-/**
- * Authentication state module backed by Supabase Auth.
- * Maintains reactive session/user state via module-level $state runes and
- * auto-initializes by fetching the current session and subscribing to auth changes.
- */
+import { PUBLIC_API_URL } from '$env/static/public';
+import { browser } from '$app/environment';
 
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '$lib/config/supabase';
-
-/** Email/password pair used for sign-in and sign-up. */
-interface Credentials {
-	email: string;
-	password: string;
-}
-
-/** Reactive auth state (module-scoped singletons shared across all consumers). */
+interface Player { id: string; name: string }
+interface Session { access_token: string; expires_at: string }
+const STORAGE_KEY = 'go-risk-it-session';
 let session = $state<Session | null>(null);
-let user = $state<User | null>(null);
+let user = $state<Player | null>(null);
 let loading = $state(true);
 
-/** Fetch the existing session on module load and subscribe to future auth changes. */
-async function init() {
-	const {
-		data: { session: currentSession }
-	} = await supabase.auth.getSession();
-	session = currentSession;
-	user = currentSession?.user ?? null;
-	loading = false;
+try {
+	if (!browser) throw new Error('server');
+	const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+	if (saved?.session?.access_token && Date.parse(saved.session.expires_at) > Date.now()) {
+		session = saved.session;
+		user = saved.user;
+	} else localStorage.removeItem(STORAGE_KEY);
+} catch { if (browser) localStorage.removeItem(STORAGE_KEY); }
+loading = false;
 
-	supabase.auth.onAuthStateChange((_event, newSession) => {
-		session = newSession;
-		user = newSession?.user ?? null;
-		loading = false;
-	});
-}
-
-init();
-
-/**
- * Returns a reactive auth accessor object. Because the underlying $state
- * is module-scoped, every caller shares the same session state.
- * @returns Reactive getters for session/user plus sign-in/sign-up/sign-out methods.
- */
 export function getAuth() {
 	return {
-		/** Current Supabase session, or null if not authenticated. */
-		get session() {
-			return session;
-		},
-		/** Current Supabase user, or null if not authenticated. */
-		get user() {
-			return user;
-		},
-		/** True while the initial session is being fetched. */
-		get loading() {
-			return loading;
-		},
-		/** Convenience boolean derived from session presence. */
-		get isAuthenticated() {
-			return !!session;
-		},
-		/** JWT access token for authenticating API/WebSocket requests. */
-		get accessToken() {
-			return session?.access_token ?? null;
-		},
-
-		/**
-		 * Sign in with email and password.
-		 * @param credentials - Email/password pair.
-		 * @throws Supabase AuthError on failure.
-		 */
-		async signInWithPassword(credentials: Credentials) {
-			const { error } = await supabase.auth.signInWithPassword({
-				email: credentials.email,
-				password: credentials.password
+		get session() { return session; },
+		get user() { return user; },
+		get loading() { return loading; },
+		get isAuthenticated() { return !!session; },
+		get accessToken() { return session?.access_token ?? null; },
+		async signIn(nickname: string) {
+			const response = await fetch(`${PUBLIC_API_URL}/sessions`, {
+				method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname: nickname.trim() })
 			});
-			if (error) throw error;
+			if (!response.ok) throw new Error(response.status === 400 ? 'Enter a valid nickname' : 'Could not start a session. Try again.');
+			const result: { userId: string; token: string; expiresAt: string } = await response.json();
+			if (!result.userId || !result.token || !result.expiresAt || !Number.isFinite(Date.parse(result.expiresAt))) throw new Error('Unexpected session response');
+			session = { access_token: result.token, expires_at: result.expiresAt };
+			user = { id: result.userId, name: nickname.trim() };
+			localStorage.setItem(STORAGE_KEY, JSON.stringify({ session, user }));
 		},
-
-		/**
-		 * Sign in using a Google OAuth ID token (One Tap / credential response).
-		 * @param token - Google ID token string.
-		 * @throws Supabase AuthError on failure.
-		 */
-		async signInWithGoogle(token: string) {
-			const { error } = await supabase.auth.signInWithIdToken({
-				provider: 'google',
-				token
-			});
-			if (error) throw error;
-		},
-
-		/**
-		 * Create a new account with email and password.
-		 * @param credentials - Email/password pair.
-		 * @throws Supabase AuthError on failure.
-		 */
-		async signUp(credentials: Credentials) {
-			const { error } = await supabase.auth.signUp({
-				email: credentials.email,
-				password: credentials.password
-			});
-			if (error) throw error;
-		},
-
-		/** Sign out and clear the session. */
 		async signOut() {
-			const { error } = await supabase.auth.signOut();
-			if (error) throw error;
+			session = null;
+			user = null;
+			localStorage.removeItem(STORAGE_KEY);
 		}
 	};
 }

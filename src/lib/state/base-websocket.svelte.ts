@@ -31,11 +31,11 @@ interface BaseWebSocketOptions {
  * @returns Reactive connection state and control methods.
  */
 export function createBaseWebSocket(options: BaseWebSocketOptions) {
-	let ws = $state<WebSocket | null>(null);
+	let ws = $state.raw<WebSocket | null>(null);
 	let connected = $state(false);
 	let reconnecting = $state(false);
 	let retriesExhausted = $state(false);
-	/** True when the last received message failed to parse. Cleared on next successful message. */
+	/** True when parsing or handling the last message failed. Cleared on success. */
 	let parseError = $state(false);
 	let retryCount = 0;
 	let retryTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -56,6 +56,7 @@ export function createBaseWebSocket(options: BaseWebSocketOptions) {
 		const socket = new WebSocket(url, protocols);
 
 		socket.onopen = () => {
+			if (ws !== socket) return;
 			connected = true;
 			reconnecting = false;
 			retriesExhausted = false;
@@ -63,6 +64,7 @@ export function createBaseWebSocket(options: BaseWebSocketOptions) {
 		};
 
 		socket.onclose = () => {
+			if (ws !== socket) return;
 			connected = false;
 			ws = null;
 
@@ -86,11 +88,12 @@ export function createBaseWebSocket(options: BaseWebSocketOptions) {
 		};
 
 		socket.onmessage = (event: MessageEvent) => {
+			if (ws !== socket) return;
 			try {
 				options.onMessage(event.data);
 				parseError = false;
-			} catch {
-				console.error(`Failed to parse ${label} message:`, event.data);
+			} catch (error) {
+				console.error(`Failed to process ${label} message:`, error, event.data);
 				parseError = true;
 			}
 		};

@@ -148,7 +148,7 @@ describe('createBaseWebSocket', () => {
 			ws.connect();
 			const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			mockInstances[0].onmessage!({ data: 'bad' });
-			expect(spy).toHaveBeenCalledWith('Failed to parse WebSocket message:', 'bad');
+			expect(spy).toHaveBeenCalledWith('Failed to process WebSocket message:', expect.objectContaining({ message: 'parse fail' }), 'bad');
 			spy.mockRestore();
 		});
 
@@ -160,7 +160,7 @@ describe('createBaseWebSocket', () => {
 			ws.connect();
 			const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			mockInstances[0].onmessage!({ data: 'x' });
-			expect(spy).toHaveBeenCalledWith('Failed to parse Lobby message:', 'x');
+			expect(spy).toHaveBeenCalledWith('Failed to process Lobby message:', expect.objectContaining({ message: 'fail' }), 'x');
 			spy.mockRestore();
 		});
 	});
@@ -325,6 +325,18 @@ describe('createBaseWebSocket', () => {
 	});
 
 	describe('reconnectWithNewToken', () => {
+		it('ignores late close/open from the replaced connecting socket', () => {
+			const ws = createBaseWebSocket(defaultOptions());
+			ws.connect();
+			ws.reconnectWithNewToken();
+			mockInstances[1].onopen!();
+			mockInstances[0].onclose!();
+			mockInstances[0].onopen!();
+			expect(ws.connected).toBe(true);
+			expect(ws.reconnecting).toBe(false);
+			vi.advanceTimersByTime(1000);
+			expect(mockInstances).toHaveLength(2);
+		});
 		it('closes existing and reconnects with fresh token', () => {
 			const ws = createBaseWebSocket(defaultOptions());
 			ws.connect();

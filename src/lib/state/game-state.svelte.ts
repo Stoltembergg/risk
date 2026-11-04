@@ -17,6 +17,7 @@ import type {
 	WebSocketMessage
 } from '$lib/types/game';
 import { getAuth } from '$lib/state/auth.svelte';
+import { MISSION_TYPES } from '$lib/types/game';
 
 /**
  * Create a reactive game state container.
@@ -83,6 +84,18 @@ export function createGameState() {
 	 */
 	function handleMessage(msg: WebSocketMessage) {
 		switch (msg.type) {
+			case 'playerView': {
+				const data = msg.data;
+				gameState = data.game;
+				phase = data.phase;
+				playersState = { players: data.players };
+				cardState = { cards: data.cards };
+				missionState = { ...data.mission, type: MISSION_TYPES[data.mission.type] } as MissionState;
+				boardState = { regions: data.regions };
+				for (const cb of boardStateListeners) cb();
+				boardStateListeners = [];
+				break;
+			}
 			case 'boardState':
 				boardState = msg.data;
 				// Notify one-shot listeners

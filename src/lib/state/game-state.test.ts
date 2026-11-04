@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { WebSocketMessage } from '$lib/types/game';
+import { parseWebSocketMessage } from '$lib/types/game';
 
 // Mock auth before importing game-state
 vi.mock('$lib/state/auth.svelte', () => ({
@@ -19,6 +20,27 @@ describe('createGameState', () => {
 	});
 
 	describe('initial state', () => {
+		it('applies the production playerView including the camelCase mission and board listener', async () => {
+			const data = {
+				game: { id: 1, turn: 0, seq: 1, winnerUserId: '' },
+				phase: { type: 'deploy', state: { deployableTroops: 3 } },
+				regions: [{ id: 'northwest_territory', ownerId: 'user', troops: 3 }],
+				players: [{ userId: 'user', name: '234', index: 0, cardCount: 0, status: 'alive' }],
+				cards: [],
+				mission: { type: 'twoContinentsPlusOne', details: { continent1: 'europe', continent2: 'oceania' } }
+			};
+			const nextBoard = state.onNextBoardState();
+			state.handleMessage(parseWebSocketMessage(JSON.stringify({ type: 'playerView', data })));
+			await nextBoard;
+			expect(state.gameState).toEqual(data.game);
+			expect(state.phase).toEqual(data.phase);
+			expect(state.deployableTroops).toBe(3);
+			expect(state.boardState).toEqual({ regions: data.regions });
+			expect(state.regionMap.get('northwest_territory')).toEqual(data.regions[0]);
+			expect(state.playersState).toEqual({ players: data.players });
+			expect(state.cardState).toEqual({ cards: [] });
+			expect(state.missionState).toEqual({ ...data.mission, type: 'TWO_CONTINENTS_PLUS_ONE' });
+		});
 		it('has null board, game, players, mission state', () => {
 			expect(state.boardState).toBeNull();
 			expect(state.gameState).toBeNull();

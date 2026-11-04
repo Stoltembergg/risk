@@ -35,7 +35,7 @@ export interface PlayerState {
 	/** Number of cards in this player's hand (other players' cards are hidden). */
 	cardCount: number;
 	status: PlayerStatus;
-	connectionStatus: ConnectionStatus;
+	connectionStatus?: ConnectionStatus;
 }
 
 /** Container for all player states in the game. */
@@ -154,7 +154,28 @@ export interface MoveHistory {
  * WebSocket message envelope — discriminated union on `type`.
  * Each variant wraps one of the game state slices.
  */
+export const MISSION_TYPES = {
+	twoContinents: 'TWO_CONTINENTS',
+	twoContinentsPlusOne: 'TWO_CONTINENTS_PLUS_ONE',
+	eighteenTerritoriesTwoTroops: 'EIGHTEEN_TERRITORIES_TWO_TROOPS',
+	twentyFourTerritories: 'TWENTY_FOUR_TERRITORIES',
+	eliminatePlayer: 'ELIMINATE_PLAYER'
+} as const;
+
+export interface PlayerView {
+	game: GameState & { seq: number; winnerUserId: string };
+	phase: Phase;
+	regions: Region[];
+	players: Omit<PlayerState, 'connectionStatus'>[];
+	cards: Card[];
+	mission: { [K in keyof typeof MISSION_TYPES]: {
+		type: K;
+		details: Extract<MissionState, { type: (typeof MISSION_TYPES)[K] }>['details'];
+	} }[keyof typeof MISSION_TYPES];
+}
+
 export type WebSocketMessage =
+	| { type: 'playerView'; data: PlayerView }
 	| { type: 'boardState'; data: BoardState }
 	| { type: 'cardState'; data: CardState }
 	| { type: 'playerState'; data: PlayersState }
@@ -164,6 +185,7 @@ export type WebSocketMessage =
 
 /** Allowed values for the message type field, used for validation. */
 const VALID_MESSAGE_TYPES = new Set<WebSocketMessage['type']>([
+	'playerView',
 	'boardState',
 	'cardState',
 	'playerState',

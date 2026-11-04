@@ -61,7 +61,7 @@
 	// Connect WebSocket and wire to game state
 	$effect(() => {
 		ws.onMessage(game.handleMessage);
-		ws.connect();
+		untrack(() => ws.connect());
 		return () => ws.disconnect();
 	});
 

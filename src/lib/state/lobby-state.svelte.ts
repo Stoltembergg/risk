@@ -36,6 +36,10 @@ export function createLobbyWebSocket(lobbyId: string) {
 		get lobbyState() {
 			return lobbyState;
 		},
+		get gameId() {
+			const id = lobbyState?.gameId;
+			return Number.isSafeInteger(id) && id! > 0 ? id : undefined;
+		},
 		connect: base.connect,
 		disconnect: base.disconnect
 	};

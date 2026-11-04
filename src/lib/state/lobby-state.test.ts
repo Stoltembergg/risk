@@ -47,6 +47,26 @@ describe('createLobbyWebSocket', () => {
 	});
 
 	describe('messages', () => {
+		it('uses the persisted game ID from start and reconnect snapshots', () => {
+			const ws = createLobbyWebSocket('7');
+			for (const gameId of [42, 99]) {
+				capturedOptions.onMessage(
+					JSON.stringify({ type: 'lobbyState', data: { id: 7, participants: [], gameId } })
+				);
+				expect(ws.gameId).toBe(gameId);
+			}
+		});
+
+		it.each([undefined, null, 0, -1, '42', '../other', 1.5, Number.MAX_SAFE_INTEGER + 1])(
+			'does not navigate using invalid game ID %s',
+			(gameId) => {
+				const ws = createLobbyWebSocket('7');
+				capturedOptions.onMessage(
+					JSON.stringify({ type: 'lobbyState', data: { id: 7, participants: [], gameId } })
+				);
+				expect(ws.gameId).toBeUndefined();
+			}
+		);
 		it('sets lobbyState on lobbyState message', () => {
 			const ws = createLobbyWebSocket('lobby-1');
 			const lobbyData = { id: 'lobby-1', owner: 'user1', participants: [] };

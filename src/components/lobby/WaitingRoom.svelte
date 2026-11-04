@@ -7,7 +7,7 @@
 	 */
 	import { goto } from '$app/navigation';
 	import { createLobbyWebSocket } from '$lib/state/lobby-state.svelte';
-	import { startLobby, getGames } from '$lib/api/lobby';
+	import { startLobby } from '$lib/api/lobby';
 	import { getAuth } from '$lib/state/auth.svelte';
 
 	interface Props {
@@ -25,6 +25,7 @@
 	let error = $state('');
 	let starting = $state(false);
 	let copied = $state(false);
+	let navigating = false;
 
 	$effect(() => {
 		lobbyWs.connect();
@@ -33,6 +34,17 @@
 
 	const participants = $derived(lobbyWs.lobbyState?.participants ?? []);
 	const canStart = $derived(isOwner && participants.length >= 3);
+
+	$effect(() => {
+		const gameId = lobbyWs.gameId;
+		if (gameId && !navigating) {
+			navigating = true;
+			void goto(`/game/${gameId}`).catch(() => {
+				navigating = false;
+				error = 'Failed to open game. Reconnect to try again.';
+			});
+		}
+	});
 
 	/** Copies a joinable lobby URL to the clipboard with a brief "Copied!" confirmation. */
 	async function copyInviteLink() {
@@ -47,18 +59,13 @@
 	}
 
 	/**
-	 * Starts the game by calling the start API, then fetches the newly created game ID
-	 * from the games list (since the start endpoint returns no body) and navigates to it.
+	 * All players navigate from the persisted lobby snapshot, including after reconnect.
 	 */
 	async function handleStart() {
 		error = '';
 		starting = true;
 		try {
 			await startLobby(lobbyId);
-			const games = await getGames();
-			if (games && games.length > 0) {
-				goto(`/game/${games[0].id}`);
-			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to start game';
 		} finally {

@@ -39,9 +39,8 @@ export interface GamesSummaryResponse {
 
 /** Full lobby state received via WebSocket while inside a lobby. */
 export interface LobbyState {
-	id: string;
-	/** User ID of the lobby creator (only the owner can start the game). */
-	owner: string;
+	id: number;
+	gameId?: number;
 	participants: LobbyParticipant[];
 }
 

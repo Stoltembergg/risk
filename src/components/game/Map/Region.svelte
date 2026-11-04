@@ -122,12 +122,12 @@
 		fill-opacity={selected ? 0.9 : dimmed ? 0.25 : 0.6}
 		stroke={selected
 			? '#fff'
-			: validTarget
-				? targetStrokeColor
-				: hasContinentBorder
-					? 'rgba(255,255,255,0.35)'
-					: 'rgba(255,255,255,0.15)'}
-		stroke-width={selected ? 1.5 : validTarget ? 1.5 : hasContinentBorder ? 1.5 : 0.5}
+		: validTarget
+			? targetStrokeColor
+			: hasContinentBorder
+				? 'rgba(255,255,255,0.8)'
+			: 'rgba(255,255,255,0.15)'}
+		stroke-width={selected ? 2.2 : validTarget ? 1.8 : hasContinentBorder ? 1.8 : 0.5}
 	/>
 
 	{#if troops > 0 && center.x !== 0}
@@ -234,8 +234,9 @@
 			filter 0.15s;
 	}
 	.region:focus-visible path {
-		stroke: var(--color-accent);
-		stroke-width: 2;
+		stroke: #fff;
+		stroke-width: 2.8;
+		filter: drop-shadow(0 0 3px var(--color-accent-light));
 	}
 	.region.clickable:hover path {
 		fill-opacity: 0.8;
@@ -304,6 +305,21 @@
 	}
 	@keyframes tooltip-fade {
 		to {
+			opacity: 1;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.region path {
+			transition: none;
+		}
+		.region.valid-target-attack path,
+		.region.valid-target-reinforce path,
+		.region.valid-target:not(.valid-target-attack):not(.valid-target-reinforce) path,
+		.region.flash path,
+		.tooltip {
+			animation: none;
+		}
+		.tooltip {
 			opacity: 1;
 		}
 	}

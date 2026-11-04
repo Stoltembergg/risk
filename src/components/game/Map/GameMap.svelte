@@ -125,6 +125,47 @@
 	let isPanning = $state(false);
 	let lastTouch = $state<{ x: number; y: number } | null>(null);
 	let lastPinchDist = $state(0);
+	let mouseDrag = $state<{ pointerId: number; x: number; y: number; moved: boolean } | null>(null);
+	let suppressClick = false;
+
+	/** Mouse drag pans the map; a click without meaningful movement remains a region selection. */
+	function handlePointerDown(e: PointerEvent) {
+		if (e.pointerType !== 'mouse' || e.button !== 0) return;
+		suppressClick = false;
+		mouseDrag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+	}
+
+	function handlePointerMove(e: PointerEvent) {
+		if (!mouseDrag || mouseDrag.pointerId !== e.pointerId) return;
+		const dx = e.clientX - mouseDrag.x;
+		const dy = e.clientY - mouseDrag.y;
+		if (!mouseDrag.moved && Math.hypot(dx, dy) < 4) return;
+		if (!mouseDrag.moved) containerEl?.setPointerCapture(e.pointerId);
+		mouseDrag.moved = true;
+		translateX += dx;
+		translateY += dy;
+		mouseDrag.x = e.clientX;
+		mouseDrag.y = e.clientY;
+	}
+
+	function handlePointerUp(e: PointerEvent) {
+		if (!mouseDrag || mouseDrag.pointerId !== e.pointerId) return;
+		suppressClick = mouseDrag.moved;
+		mouseDrag = null;
+	}
+
+	function handlePointerCancel(e: PointerEvent) {
+		if (!mouseDrag || mouseDrag.pointerId !== e.pointerId) return;
+		mouseDrag = null;
+		suppressClick = false;
+	}
+
+	function handleClickCapture(e: MouseEvent) {
+		if (!suppressClick) return;
+		e.preventDefault();
+		e.stopPropagation();
+		suppressClick = false;
+	}
 
 	/** Handles single-finger pan and two-finger pinch-to-zoom. */
 	function handleTouchStart(e: TouchEvent) {
@@ -185,8 +226,14 @@
 <div
 	bind:this={containerEl}
 	class="relative h-full w-full touch-none overflow-hidden"
+	class:grabbing={mouseDrag?.moved}
 	role="img"
 	aria-label="Game map"
+	onpointerdown={handlePointerDown}
+	onpointermove={handlePointerMove}
+	onpointerup={handlePointerUp}
+		onpointercancel={handlePointerCancel}
+	onclickcapture={handleClickCapture}
 	ontouchstart={handleTouchStart}
 	ontouchmove={handleTouchMove}
 	ontouchend={handleTouchEnd}
@@ -273,3 +320,12 @@
 		</button>
 	{/if}
 </div>
+
+<style>
+	div {
+		cursor: grab;
+	}
+	div.grabbing {
+		cursor: grabbing;
+	}
+</style>

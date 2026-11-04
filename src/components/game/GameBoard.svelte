@@ -6,6 +6,7 @@
 	 * to GameMap, StatusBar, ActionPanel, and overlay components.
 	 */
 	import { untrack } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import GameMap from './Map/GameMap.svelte';
 	import PhaseBar from './PhaseBar.svelte';
 	import StatusBar from './StatusBar/StatusBar.svelte';
@@ -19,6 +20,7 @@
 	import { getAuth } from '$lib/state/auth.svelte';
 	import { buildPlayerColorMap } from '$lib/utils/colors';
 	import { Graph } from '$lib/utils/graph';
+	import { createContinentConquestDetector } from '$lib/utils/continent-conquest';
 	import {
 		playTurnStart,
 		playConquer,
@@ -37,6 +39,27 @@
 	const mapData = getMapData();
 	const game = createGameState();
 	const moveState = createMoveState();
+	let continentAnnouncement = $state('');
+	const detectContinentConquest = createContinentConquestDetector();
+	let announcementTimer: ReturnType<typeof setTimeout>;
+
+	// Initial server snapshot is baseline, not a conquest event (including reconnects).
+	$effect(() => {
+		const board = game.boardState;
+		const connected = ws.connected;
+		if (!connected) {
+			detectContinentConquest([], [], [], false);
+			return;
+		}
+		if (!board || !mapData.loaded) return;
+		const conquered = detectContinentConquest(board.regions, mapData.layers, mapData.continents, connected);
+		if (conquered) {
+			continentAnnouncement = `${conquered} dominado!`;
+			clearTimeout(announcementTimer);
+			announcementTimer = setTimeout(() => continentAnnouncement = '', 4200);
+		}
+	});
+	onDestroy(() => clearTimeout(announcementTimer));
 
 	// WebSocket is created once per component lifecycle - gameId won't change
 	// because SvelteKit remounts the component on route param changes
@@ -218,6 +241,7 @@
 			const firstRegion = game.regionMap.get(regionIds[0]);
 			if (!firstRegion) continue;
 			const ownerId = firstRegion.ownerId;
+			if (!ownerId) continue;
 			const allOwned = regionIds.every((rId) => {
 				const r = game.regionMap.get(rId);
 				return r && r.ownerId === ownerId;
@@ -405,6 +429,9 @@
 	/>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="flex h-dvh flex-col overflow-hidden" onkeydown={handleKeydown}>
+		{#if continentAnnouncement}
+			<div class="continent-toast" role="status" aria-live="polite">✦ {continentAnnouncement} ✦</div>
+		{/if}
 		<!-- Top bar: phase timeline + controls -->
 		<header class="flex items-center justify-between px-4 py-2">
 			<PhaseBar currentPhase={game.phase?.type ?? null} isMyTurn={game.isMyTurn} />
@@ -502,3 +529,9 @@
 		<GameOverOverlay won={gameOver.won} playerName={gameOver.winnerName} stats={gameStats} />
 	{/if}
 {/if}
+
+<style>
+	.continent-toast { position: fixed; z-index: 50; top: 4.5rem; left: 50%; transform: translateX(-50%); padding: 1rem 1.75rem; border: 1px solid #e8bd69; border-radius: 1rem; background: linear-gradient(135deg, #282417ee, #554321ee); color: #ffe6a8; box-shadow: 0 12px 42px #0008, inset 0 0 25px #edc66b22; font: 700 1.2rem Georgia, serif; letter-spacing: .04em; text-align: center; animation: continent-arrive .55s cubic-bezier(.2,.9,.3,1.3) both; }
+	@keyframes continent-arrive { from { opacity: 0; translate: 0 -18px; scale: .88; } to { opacity: 1; translate: 0 0; scale: 1; } }
+	@media (prefers-reduced-motion: reduce) { .continent-toast { animation: none; } }
+</style>

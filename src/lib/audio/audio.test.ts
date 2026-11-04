@@ -5,6 +5,7 @@ describe('audio system', () => {
 
 	beforeEach(async () => {
 		vi.resetModules();
+		localStorage.removeItem('audio-enabled');
 		// Re-setup AudioContext mock after resetModules
 		const mockOscillator = {
 			type: 'sine',
@@ -38,11 +39,6 @@ describe('audio system', () => {
 		expect(audioModule.audio.enabled).toBe(true);
 	});
 
-	it('play functions create oscillator when enabled', () => {
-		audioModule.playDeploy();
-		expect(globalThis.AudioContext).toHaveBeenCalled();
-	});
-
 	it('play functions do nothing when disabled', () => {
 		audioModule.audio.toggle(); // disable
 		const callCount = (globalThis.AudioContext as unknown as ReturnType<typeof vi.fn>).mock.calls
@@ -52,6 +48,21 @@ describe('audio system', () => {
 		expect((globalThis.AudioContext as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
 			callCount
 		);
+	});
+
+	it('plays bundled movement and combat samples when enabled', () => {
+		const play = vi.fn().mockResolvedValue(undefined);
+		vi.stubGlobal('Audio', vi.fn().mockImplementation(function (this: { currentTime: number; play: typeof play }, src: string) {
+			this.currentTime = 0;
+			this.play = play;
+			(this as unknown as { src: string }).src = src;
+		}));
+		audioModule.playDeploy();
+		audioModule.playAttack();
+		expect(globalThis.Audio).toHaveBeenNthCalledWith(1, '/audio/footstep04.ogg');
+		expect(globalThis.Audio).toHaveBeenNthCalledWith(2, '/audio/knifeSlice.ogg');
+		expect(play).toHaveBeenCalledTimes(2);
+		vi.unstubAllGlobals();
 	});
 
 	it('all play functions execute without error', () => {
@@ -64,13 +75,13 @@ describe('audio system', () => {
 		expect(() => audioModule.playDefeat()).not.toThrow();
 	});
 
-	it('AudioContext creation failure does not throw', async () => {
-		vi.resetModules();
-		globalThis.AudioContext = vi.fn().mockImplementation(() => {
-			throw new Error('Not supported');
-		}) as unknown as typeof AudioContext;
-		const mod = await import('./audio.svelte');
-		expect(() => mod.playDeploy()).not.toThrow();
+	it('sound cues without a matching sample stay silent', () => {
+		audioModule.playConquer();
+		audioModule.playTurnStart();
+		audioModule.playCardPlay();
+		audioModule.playVictory();
+		audioModule.playDefeat();
+		expect(globalThis.AudioContext).not.toHaveBeenCalled();
 	});
 
 	describe('localStorage persistence', () => {

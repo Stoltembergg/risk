@@ -19,6 +19,7 @@
 	import { getMapData } from '$lib/state/map-data.svelte';
 	import { getAuth } from '$lib/state/auth.svelte';
 	import { buildPlayerColorMap } from '$lib/utils/colors';
+	import { formatContinentName } from '$lib/utils/format';
 	import { Graph } from '$lib/utils/graph';
 	import { createContinentConquestDetector } from '$lib/utils/continent-conquest';
 	import {
@@ -54,7 +55,7 @@
 		if (!board || !mapData.loaded) return;
 		const conquered = detectContinentConquest(board.regions, mapData.layers, mapData.continents, connected);
 		if (conquered) {
-			continentAnnouncement = `${conquered} dominado!`;
+			continentAnnouncement = `${formatContinentName(conquered)} dominado!`;
 			clearTimeout(announcementTimer);
 			announcementTimer = setTimeout(() => continentAnnouncement = '', 4200);
 		}
@@ -140,7 +141,7 @@
 			playTurnStart();
 			// Browser notification
 			if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-				new Notification('Risk', { body: "It's your turn!" });
+				new Notification('Risk', { body: 'Sua vez de jogar!' });
 			}
 		}
 		prevIsMyTurn = myTurn;
@@ -319,7 +320,7 @@
 
 	// Escape key to cancel region selection
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') moveState.reset();
+		if (e.key === 'Escape') moveState.cancelSelection();
 	}
 
 	/**
@@ -393,8 +394,8 @@
 	<div class="flex min-h-dvh items-center justify-center">
 		<div class="text-center">
 			{#if loadTimedOut}
-				<p class="mb-2 text-lg text-gray-300">Game failed to load</p>
-				<p class="mb-4 text-sm text-gray-500">This could be a connection issue.</p>
+				<p class="mb-2 text-lg text-gray-300">Não foi possível carregar a partida</p>
+				<p class="mb-4 text-sm text-gray-500">Verifique sua conexão e tente novamente.</p>
 				<div class="flex justify-center gap-3">
 					<button
 						onclick={() => {
@@ -403,20 +404,20 @@
 						}}
 						class="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent-light"
 					>
-						Retry
+						Tentar novamente
 					</button>
 					<a
 						href="/"
 						class="inline-block rounded-lg bg-surface-600 px-4 py-2 text-sm font-semibold transition-colors hover:bg-surface-500"
 					>
-						Back to Lobby
+						Voltar à sala
 					</a>
 				</div>
 			{:else}
 				<div
 					class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent"
 				></div>
-				<p class="text-gray-400">Loading game...</p>
+				<p class="text-gray-400">Carregando partida…</p>
 			{/if}
 		</div>
 	</div>
@@ -438,16 +439,16 @@
 			<div class="flex items-center gap-3">
 				<div class="text-sm text-gray-400" data-testid="turn-indicator">
 					{#if game.isMyTurn}
-						<span class="font-semibold text-accent-light">Your turn</span>
+						<span class="font-semibold text-accent-light">Sua vez</span>
 					{:else}
-						Waiting for <span class="font-semibold">{currentPlayerName}</span>
+						Aguardando <span class="font-semibold">{currentPlayerName}</span>
 					{/if}
 				</div>
 				<!-- Audio toggle -->
 				<button
 					onclick={() => audio.toggle()}
 					class="cursor-pointer rounded-lg bg-surface-700 px-2 py-1 text-xs text-gray-400 transition-colors hover:bg-surface-600 hover:text-gray-200"
-					title={audio.enabled ? 'Mute sounds' : 'Unmute sounds'}
+					title={audio.enabled ? 'Silenciar sons' : 'Ativar sons'}
 				>
 					{audio.enabled ? '🔊' : '🔇'}
 				</button>
@@ -457,8 +458,8 @@
 					class:bg-green-500={ws.connected}
 					class:bg-red-500={!ws.connected}
 					role="status"
-					aria-label={ws.connected ? 'Connected to server' : 'Disconnected from server'}
-					title={ws.connected ? 'Connected to server' : 'Disconnected from server'}
+					aria-label={ws.connected ? 'Conectado ao servidor' : 'Desconectado do servidor'}
+					title={ws.connected ? 'Conectado ao servidor' : 'Desconectado do servidor'}
 				></span>
 			</div>
 		</header>
@@ -498,7 +499,7 @@
 						: moveState.interaction.phase === 'reinforce'
 							? moveState.interaction.sourceRegionId
 							: null}
-					targetRegionId={moveState.interaction.phase === 'reinforce' &&
+				targetRegionId={(moveState.interaction.phase === 'reinforce' || moveState.interaction.phase === 'attack') &&
 					'targetRegionId' in moveState.interaction
 						? moveState.interaction.targetRegionId
 						: null}

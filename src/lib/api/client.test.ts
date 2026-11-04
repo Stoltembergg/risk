@@ -81,7 +81,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 400,
-				message: 'Invalid move — check your selection'
+				message: 'Movimento inválido. Confira sua seleção.'
 			});
 		});
 
@@ -93,7 +93,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 401,
-				message: 'Session expired — please sign in again'
+				message: 'Sua sessão expirou. Entre novamente.'
 			});
 		});
 
@@ -105,7 +105,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 409,
-				message: 'Game state changed — try again'
+				message: 'O estado da partida mudou. Tente novamente.'
 			});
 		});
 
@@ -117,7 +117,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 500,
-				message: 'Server error — try again shortly'
+				message: 'Erro no servidor. Tente novamente em instantes.'
 			});
 		});
 
@@ -129,11 +129,11 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 503,
-				message: 'Server error — try again shortly'
+				message: 'Erro no servidor. Tente novamente em instantes.'
 			});
 		});
 
-		it('falls back to body text for unknown status', async () => {
+		it('uses a localized message for unknown statuses', async () => {
 			globalThis.fetch = vi.fn().mockResolvedValue({
 				ok: false,
 				status: 418,
@@ -141,7 +141,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 418,
-				message: 'I am a teapot'
+				message: 'Não foi possível concluir a solicitação (erro 418).'
 			});
 		});
 
@@ -153,7 +153,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 418,
-				message: 'Request failed: 418'
+				message: 'Não foi possível concluir a solicitação (erro 418).'
 			});
 		});
 
@@ -165,7 +165,7 @@ describe('api client', () => {
 			});
 			await expect(api.get('/test')).rejects.toMatchObject({
 				status: 418,
-				message: 'Request failed: 418'
+				message: 'Não foi possível concluir a solicitação (erro 418).'
 			});
 		});
 	});
@@ -177,7 +177,7 @@ describe('api client', () => {
 		});
 		await expect(api.get('/test')).rejects.toMatchObject({
 			status: 0,
-			message: 'Request timed out'
+			message: 'A solicitação demorou demais. Verifique sua conexão e tente novamente.'
 		});
 	});
 
@@ -185,7 +185,7 @@ describe('api client', () => {
 		globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
 		await expect(api.get('/test')).rejects.toMatchObject({
 			status: 0,
-			message: 'Failed to fetch'
+		message: 'Falha de conexão. Verifique sua internet e tente novamente.'
 		});
 	});
 });

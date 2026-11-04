@@ -51,7 +51,7 @@ async function request<T>(
 ): Promise<T> {
 	const auth = getAuth();
 	const token = auth.accessToken;
-	if (!token) throw new ApiError(401, 'Not authenticated');
+	if (!token) throw new ApiError(401, 'Você não está conectado. Entre novamente.');
 
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -68,17 +68,17 @@ async function request<T>(
 		});
 
 		if (!res.ok) {
-			const body = await res.text().catch(() => '');
+			await res.text().catch(() => '');
 			const friendly =
 				res.status === 400
-					? 'Invalid move — check your selection'
+					? 'Movimento inválido. Confira sua seleção.'
 					: res.status === 401
-						? 'Session expired — please sign in again'
+						? 'Sua sessão expirou. Entre novamente.'
 						: res.status === 409
-							? 'Game state changed — try again'
+							? 'O estado da partida mudou. Tente novamente.'
 							: res.status >= 500
-								? 'Server error — try again shortly'
-								: body || `Request failed: ${res.status}`;
+								? 'Erro no servidor. Tente novamente em instantes.'
+								: `Não foi possível concluir a solicitação (erro ${res.status}).`;
 			throw new ApiError(res.status, friendly);
 		}
 
@@ -89,20 +89,20 @@ async function request<T>(
 		try {
 			parsed = JSON.parse(text);
 		} catch {
-			throw new ApiError(res.status, 'Invalid JSON response');
+			throw new ApiError(res.status, 'O servidor retornou uma resposta inválida.');
 		}
 
 		if (validate && !validate(parsed)) {
-			throw new ApiError(res.status, 'Unexpected response format');
+			throw new ApiError(res.status, 'O servidor retornou dados em formato inesperado.');
 		}
 
 		return parsed as T;
 	} catch (err) {
 		if (err instanceof ApiError) throw err;
 		if (err instanceof DOMException && err.name === 'AbortError') {
-			throw new ApiError(0, 'Request timed out');
+			throw new ApiError(0, 'A solicitação demorou demais. Verifique sua conexão e tente novamente.');
 		}
-		throw new ApiError(0, err instanceof Error ? err.message : 'Unknown error');
+		throw new ApiError(0, 'Falha de conexão. Verifique sua internet e tente novamente.');
 	} finally {
 		clearTimeout(timeoutId);
 	}

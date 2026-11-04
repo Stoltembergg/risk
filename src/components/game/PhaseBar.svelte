@@ -15,11 +15,11 @@
 	let { currentPhase, isMyTurn }: Props = $props();
 
 	const phases: { id: PhaseType; label: string; tooltip: string }[] = [
-		{ id: 'cards', label: 'Cards', tooltip: 'Trade card sets for bonus troops' },
-		{ id: 'deploy', label: 'Deploy', tooltip: 'Place troops on your territories' },
-		{ id: 'attack', label: 'Attack', tooltip: 'Invade adjacent enemy territories' },
-		{ id: 'conquer', label: 'Conquer', tooltip: 'Move troops into conquered territory' },
-		{ id: 'reinforce', label: 'Reinforce', tooltip: 'Move troops between your territories' }
+		{ id: 'cards', label: 'Cartas', tooltip: 'Troque conjuntos de cartas por tropas extras' },
+		{ id: 'deploy', label: 'Reforçar', tooltip: 'Envie tropas aos seus territórios' },
+		{ id: 'attack', label: 'Atacar', tooltip: 'Invada territórios inimigos vizinhos' },
+		{ id: 'conquer', label: 'Conquistar', tooltip: 'Mova tropas para o território conquistado' },
+		{ id: 'reinforce', label: 'Redistribuir', tooltip: 'Mova tropas entre seus territórios' }
 	];
 </script>
 

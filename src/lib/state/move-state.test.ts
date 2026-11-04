@@ -2,6 +2,36 @@ import { describe, it, expect } from 'vitest';
 import { createMoveState } from './move-state.svelte';
 
 describe('createMoveState', () => {
+	it.each(['deploy', 'attack', 'conquer', 'reinforce', 'cards'] as const)(
+		'cancelSelection clears %s selections and permits another move',
+		(phase) => {
+			const state = createMoveState();
+			state.startPhase(phase);
+			const empty = JSON.parse(JSON.stringify(state.interaction));
+			const select = () => {
+				state.setDeployRegion('r1');
+				state.setAttackSource('r1');
+				state.requestBlitz('r2');
+				state.setConquerTroops(3);
+				state.setReinforceSource('r1');
+				state.setReinforceTarget('r2');
+				state.setSelectedCards([1, 2, 3]);
+			};
+			select();
+			expect(state.interaction).not.toEqual(empty);
+			state.cancelSelection();
+			expect(state.interaction).toEqual(empty);
+			select();
+			expect(state.interaction).not.toEqual(empty);
+		}
+	);
+
+	it('cancelSelection leaves spectators idle', () => {
+		const state = createMoveState();
+		state.cancelSelection();
+		expect(state.interaction).toEqual({ phase: 'idle' });
+	});
+
 	it('starts in idle phase', () => {
 		const state = createMoveState();
 		expect(state.interaction).toEqual({ phase: 'idle' });

@@ -8,6 +8,7 @@
 	 */
 	import type { MissionState, BoardState, PlayerState } from '$lib/types/game';
 	import type { MapLayer, Continent } from '$lib/types/map';
+	import { formatContinentName } from '$lib/utils/format';
 
 	interface Props {
 		mission: MissionState | null;
@@ -66,7 +67,7 @@
 					return region && region.ownerId === myUserId;
 				});
 			const continent = continents.find((c) => c.id === cId);
-			names.push(continent?.name ?? cId);
+			names.push(formatContinentName(continent?.name ?? cId));
 			if (allOwned) owned++;
 		}
 		return { owned, target: targetContinentIds.length, names };
@@ -77,7 +78,7 @@
 		if (!mission || mission.type !== 'ELIMINATE_PLAYER') return null;
 		const targetId = mission.details.targetUserId;
 		const player = players.find((p) => p.userId === targetId);
-		return player?.name ?? 'Unknown';
+		return player?.name ?? 'jogador desconhecido';
 	});
 
 	const targetPlayerDead = $derived.by(() => {
@@ -88,20 +89,20 @@
 	});
 
 	const missionText = $derived.by(() => {
-		if (!mission) return 'Loading mission...';
+		if (!mission) return 'Carregando objetivo…';
 		switch (mission.type) {
 			case 'TWO_CONTINENTS':
-				return `Conquer ${continentProgress.names.join(' & ')}`;
+				return `Conquiste ${continentProgress.names.join(' e ')}`;
 			case 'TWO_CONTINENTS_PLUS_ONE':
-				return `Conquer ${continentProgress.names.join(' & ')} + 1 more`;
+				return `Conquiste ${continentProgress.names.join(' e ')} e mais um continente`;
 			case 'EIGHTEEN_TERRITORIES_TWO_TROOPS':
-				return 'Hold 18 territories with 2+ troops each';
+				return 'Mantenha 18 territórios com pelo menos 2 tropas em cada';
 			case 'TWENTY_FOUR_TERRITORIES':
-				return 'Conquer 24 territories';
+				return 'Conquiste 24 territórios';
 			case 'ELIMINATE_PLAYER':
-				return `Eliminate ${targetPlayerName ?? 'a player'}`;
+				return `Elimine ${targetPlayerName ?? 'um jogador'}`;
 			default:
-				return 'Unknown mission';
+				return 'Objetivo desconhecido';
 		}
 	});
 
@@ -117,7 +118,7 @@
 			case 'TWO_CONTINENTS_PLUS_ONE':
 				return `${continentProgress.owned}/${continentProgress.target} + ?`;
 			case 'ELIMINATE_PLAYER':
-				return targetPlayerDead ? 'Done!' : 'In progress';
+				return targetPlayerDead ? 'Concluído!' : 'Em andamento';
 			default:
 				return null;
 		}
@@ -147,12 +148,12 @@
 </script>
 
 <div class="rounded-lg bg-surface-700/50 px-3 py-2">
-	<div class="mb-1 text-xs font-semibold text-gray-400 uppercase">Mission</div>
+	<div class="mb-1 text-xs font-semibold text-gray-400 uppercase">Objetivo</div>
 	<div class="text-sm">{missionText}</div>
 	{#if progressText}
 		<div class="mt-2">
 			<div class="mb-1 flex items-center justify-between text-xs">
-				<span class="text-gray-400">Progress</span>
+				<span class="text-gray-400">Progresso</span>
 				<span class="font-semibold" class:text-green-400={progressPercent >= 100}
 					>{progressText}</span
 				>

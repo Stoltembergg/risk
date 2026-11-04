@@ -121,13 +121,13 @@
 			await playCards(gameState.id, { combinations: interaction.combinations });
 			playCardPlay();
 			moveState.startPhase('cards');
-		}, 'Play cards failed');
+		}, 'Falha ao jogar as cartas. Tente novamente.');
 	}
 
 	async function handleAdvance() {
 		await action.run(async () => {
 			await advance(gameState.id, { currentPhase: 'cards' });
-		}, 'Advance failed');
+		}, 'Não foi possível avançar a fase.');
 	}
 
 	function cardTypeIcon(type: string): string {
@@ -146,7 +146,7 @@
 	}
 
 	function cardTypeName(type: string): string {
-		return type.charAt(0).toUpperCase() + type.slice(1);
+		return ({ infantry: 'Infantaria', cavalry: 'Cavalaria', artillery: 'Artilharia', jolly: 'Coringa' } as Record<string, string>)[type] ?? 'Carta';
 	}
 
 	const CARD_TYPE_COLORS: Record<string, string> = {
@@ -163,12 +163,12 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Cards</h3>
+	<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Cartas</h3>
 
 	<div class="rounded bg-surface-700/50 px-2.5 py-2 text-xs text-gray-400">
-		<div class="mb-1 font-semibold text-gray-300">Valid combinations:</div>
-		<div>3 of the same type, or 1 of each type</div>
-		<div class="mt-1">Jolly &#9733; counts as any type</div>
+		<div class="mb-1 font-semibold text-gray-300">Combinações válidas:</div>
+		<div>3 do mesmo tipo ou 1 de cada tipo</div>
+		<div class="mt-1">Coringa &#9733; vale como qualquer tipo</div>
 	</div>
 
 	<!-- Auto-promote flash feedback -->
@@ -176,12 +176,12 @@
 		<div
 			class="combo-flash rounded-lg border border-accent/50 bg-accent/10 px-3 py-2 text-center text-sm font-semibold text-accent-light"
 		>
-			Valid combination! +{flashCombo.reward} troops
+			Combinação válida! +{flashCombo.reward} tropas
 		</div>
 	{/if}
 
 	{#if cardState.cards.length === 0}
-		<p class="text-sm text-gray-500">No cards in hand.</p>
+		<p class="text-sm text-gray-500">Você não tem cartas.</p>
 	{:else}
 		<div class="grid grid-cols-2 gap-2 min-[375px]:grid-cols-3">
 			{#each availableCards as card (card.id)}
@@ -205,7 +205,7 @@
 					style="border-top: 3px solid {CARD_TYPE_COLORS[card.type] ?? '#666'}"
 				>
 					<span class="text-lg">{cardTypeIcon(card.type)}</span>
-					<span class="mt-0.5 font-medium capitalize">{card.type}</span>
+					<span class="mt-0.5 font-medium">{cardTypeName(card.type)}</span>
 					{#if card.region}
 						<span
 							class="mt-0.5 truncate text-center leading-tight"
@@ -217,10 +217,10 @@
 							{formatRegionName(card.region)}
 						</span>
 						{#if ownsRegion}
-							<span class="mt-0.5 text-accent-light" style="font-size: 0.55rem">+2 bonus</span>
+						<span class="mt-0.5 text-accent-light" style="font-size: 0.55rem">+2 bônus</span>
 						{/if}
 					{:else}
-						<span class="mt-0.5 text-gray-600" style="font-size: 0.6rem">Wild</span>
+						<span class="mt-0.5 text-gray-600" style="font-size: 0.6rem">Coringa</span>
 					{/if}
 				</button>
 			{/each}
@@ -229,7 +229,7 @@
 
 	{#if interaction.combinations.length > 0}
 		<div class="space-y-2">
-			<div class="text-xs font-semibold text-gray-400">Combinations to play:</div>
+			<div class="text-xs font-semibold text-gray-400">Combinações para jogar:</div>
 			{#each interaction.combinations as combo, i (i)}
 				{@const cards = resolveCards(combo.cardIDs)}
 				{@const reward = getCombinationReward(cards)}
@@ -260,12 +260,12 @@
 							<span
 								class="rounded bg-accent/20 px-1.5 py-0.5 text-xs font-semibold text-accent-light"
 							>
-								+{reward} troops
+								+{reward} tropas
 							</span>
 						{/if}
 						{#each bonuses as regionId (regionId)}
 							<span class="rounded bg-green-900/30 px-1.5 py-0.5 text-xs text-green-400">
-								+2 to {formatRegionName(regionId)}
+								+2 em {formatRegionName(regionId)}
 							</span>
 						{/each}
 					</div>
@@ -283,7 +283,7 @@
 			data-testid="play-cards-btn"
 			class="w-full cursor-pointer rounded-lg bg-accent py-2 text-sm font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 		>
-			{action.submitting ? 'Playing...' : 'Play Cards'}
+			{action.submitting ? 'Jogando…' : 'Jogar cartas'}
 		</button>
 	{/if}
 
@@ -292,7 +292,7 @@
 		data-testid="skip-cards-btn"
 		class="w-full cursor-pointer rounded-lg bg-surface-600 py-2 text-sm transition-colors hover:bg-surface-500"
 	>
-		Skip to Deploy
+		Pular para reforços
 	</button>
 </div>
 

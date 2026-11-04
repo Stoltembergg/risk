@@ -31,7 +31,7 @@
 			onclick={onmax}
 			class="cursor-pointer rounded bg-surface-600 px-2 py-0.5 text-xs text-gray-300 transition-colors hover:bg-surface-500"
 		>
-			Max
+			Máx.
 		</button>
 	</div>
 	<input
@@ -44,5 +44,5 @@
 		oninput={(e) => onchange(parseInt((e.target as HTMLInputElement).value))}
 		class="w-full accent-accent"
 	/>
-	<div class="text-center text-sm font-semibold">{value} troops</div>
+	<div class="text-center text-sm font-semibold">{value} {value === 1 ? 'tropa' : 'tropas'}</div>
 </div>

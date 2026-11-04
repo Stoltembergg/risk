@@ -41,24 +41,24 @@
 			<span class="flex-1 truncate text-sm" class:font-bold={isCurrent} class:line-through={isDead}>
 				{player.name}
 				{#if isMe}
-					<span class="text-xs text-gray-400">(you)</span>
+					<span class="text-xs text-gray-400">(você)</span>
 				{/if}
 			</span>
-			<span class="text-xs text-gray-400">{player.cardCount} cards</span>
+			<span class="text-xs text-gray-400">{player.cardCount} cartas</span>
 			{#if !isDead}
 				{#if player.connectionStatus === 'disconnected'}
 					<span
 						class="h-2 w-2 rounded-full bg-red-500"
-						title="{player.name} disconnected"
+						title="{player.name} desconectado"
 						role="status"
-						aria-label="{player.name} disconnected"
+						aria-label="{player.name} desconectado"
 					></span>
 				{:else}
 					<span
 						class="h-2 w-2 rounded-full bg-green-500"
-						title="{player.name} connected"
+						title="{player.name} conectado"
 						role="status"
-						aria-label="{player.name} connected"
+						aria-label="{player.name} conectado"
 					></span>
 				{/if}
 			{/if}

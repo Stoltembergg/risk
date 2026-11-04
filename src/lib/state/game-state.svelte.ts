@@ -111,6 +111,18 @@ export function createGameState() {
 				playersState = msg.data;
 				break;
 
+			case 'playerConnection':
+				if (playersState) {
+					playersState = {
+						players: playersState.players.map((player) =>
+							player.userId === msg.data.userId
+								? { ...player, connectionStatus: msg.data.status }
+								: player
+						)
+					};
+				}
+				break;
+
 			case 'gameState': {
 				const data = msg.data;
 				gameState = {

@@ -54,6 +54,11 @@ export function createMoveState() {
 		interaction = { phase: 'idle' };
 	}
 
+	/** Discard selections without disabling interaction for the current phase. */
+	function cancelSelection() {
+		if (interaction.phase !== 'idle') startPhase(interaction.phase);
+	}
+
 	/**
 	 * Transition to a new phase with default (empty) interaction values.
 	 * @param phaseType - The game phase to enter.
@@ -224,6 +229,7 @@ export function createMoveState() {
 			lastConqueredRegionId = null;
 		},
 		reset,
+		cancelSelection,
 		startPhase,
 		setDeployRegion,
 		setDeployTroops,

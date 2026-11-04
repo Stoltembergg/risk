@@ -31,7 +31,7 @@
 				<button
 					onclick={() => toasts.dismiss(toast.id)}
 					class="cursor-pointer text-white/60 hover:text-white"
-					aria-label="Dismiss notification"
+					aria-label="Dispensar notificação"
 				>
 					&times;
 				</button>

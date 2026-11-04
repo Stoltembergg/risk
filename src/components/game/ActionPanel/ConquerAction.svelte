@@ -39,24 +39,24 @@
 	async function handleConquer() {
 		await action.run(async () => {
 			await conquer(gameId, { troops: interaction.troops });
-		}, 'Conquer failed');
+		}, 'Falha ao mover tropas para o território conquistado.');
 	}
 </script>
 
 <div class="space-y-4">
 	<h3 class="text-sm font-bold uppercase tracking-wider text-green-400">
-		Move Troops to Conquered Territory
+		Mover tropas para o território conquistado
 	</h3>
 
 	<div class="space-y-2">
 		<div class="text-sm">
-			<span class="text-gray-400">From:</span>
+			<span class="text-gray-400">Origem:</span>
 			<span class="font-semibold"
 				>{formatRegionName(conquerState.attackingRegionId)} ({attackingRegion?.troops})</span
 			>
 		</div>
 		<div class="text-sm">
-			<span class="text-gray-400">To:</span>
+			<span class="text-gray-400">Destino:</span>
 			<span class="font-semibold"
 				>{formatRegionName(conquerState.defendingRegionId)} ({defendingRegion?.troops})</span
 			>
@@ -65,7 +65,7 @@
 
 	<TroopSlider
 		id="conquer-slider"
-		label="Troops to move (min: {conquerState.minTroopsToMove})"
+		label="Tropas a mover (mínimo: {conquerState.minTroopsToMove})"
 		min={conquerState.minTroopsToMove}
 		max={maxTroops}
 		value={interaction.troops}
@@ -83,6 +83,6 @@
 		data-testid="conquer-btn"
 		class="w-full cursor-pointer rounded-lg bg-green-600 py-2 text-sm font-semibold transition-colors hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
 	>
-		{action.submitting ? 'Moving...' : `Move ${interaction.troops} troops`}
+		{action.submitting ? 'Movendo…' : `Mover ${interaction.troops} tropas`}
 	</button>
 </div>

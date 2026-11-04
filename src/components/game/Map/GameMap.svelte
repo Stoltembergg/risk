@@ -116,6 +116,13 @@
 		const arrowPoints = `${to.x},${to.y} ${ax - uy * 4},${ay + ux * 4} ${ax + uy * 4},${ay - ux * 4}`;
 		return { from, to, arrowPoints };
 	});
+	const attackPath = $derived.by(() => {
+		if (currentPhase !== 'attack' || !sourceRegionId || !targetRegionId) return null;
+		const from = regionCenters.get(sourceRegionId);
+		const to = regionCenters.get(targetRegionId);
+		if (!from || !to) return null;
+		return `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2} ${Math.min(from.y, to.y) - 30} ${to.x} ${to.y}`;
+	});
 
 	// Touch pan/zoom state
 	let containerEl = $state<HTMLDivElement | null>(null);
@@ -228,7 +235,7 @@
 	class="relative h-full w-full touch-none overflow-hidden"
 	class:grabbing={mouseDrag?.moved}
 	role="img"
-	aria-label="Game map"
+	aria-label="Mapa da partida"
 	onpointerdown={handlePointerDown}
 	onpointermove={handlePointerMove}
 	onpointerup={handlePointerUp}
@@ -284,6 +291,16 @@
 		{/each}
 
 		<!-- Reinforce connection path (above regions) -->
+		{#if attackPath}
+			<g pointer-events="none" aria-label="Prévia visual do ataque">
+				<path d={attackPath} fill="none" stroke="#ffb45b" stroke-width="2" stroke-dasharray="5 5" opacity=".75" />
+				<g>
+					<circle r="5" fill="#27231f" stroke="#ffc66e" stroke-width="1.5" />
+					<path d="M 3 -4 Q 6 -9 9 -7" fill="none" stroke="#ff9f43" stroke-width="1.5" />
+					<animateMotion path={attackPath} dur=".75s" fill="freeze" />
+				</g>
+			</g>
+		{/if}
 		{#if reinforcePath}
 			<g class="reinforce-path" pointer-events="none">
 				<line
@@ -306,7 +323,10 @@
 					/>
 				</line>
 				<polygon points={reinforcePath.arrowPoints} fill="#4ade80" opacity="0.7" />
-			</g>
+				<circle r="4" fill="#a7f3d0" stroke="#14532d" stroke-width="1">
+					<animateMotion path="M {reinforcePath.from.x} {reinforcePath.from.y} L {reinforcePath.to.x} {reinforcePath.to.y}" dur="1s" fill="freeze" />
+				</circle>
+		</g>
 		{/if}
 	</svg>
 
@@ -316,7 +336,7 @@
 			onclick={resetView}
 			class="absolute right-2 bottom-2 cursor-pointer rounded-lg bg-surface-700/80 px-2 py-1 text-xs text-gray-300 backdrop-blur-sm transition-colors hover:bg-surface-600"
 		>
-			Reset view
+			Redefinir mapa
 		</button>
 	{/if}
 </div>
@@ -327,5 +347,8 @@
 	}
 	div.grabbing {
 		cursor: grabbing;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		:global(svg animateMotion), :global(svg animate) { display: none; }
 	}
 </style>

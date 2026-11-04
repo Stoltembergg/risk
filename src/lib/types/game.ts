@@ -179,6 +179,7 @@ export type WebSocketMessage =
 	| { type: 'boardState'; data: BoardState }
 	| { type: 'cardState'; data: CardState }
 	| { type: 'playerState'; data: PlayersState }
+	| { type: 'playerConnection'; data: { userId: string; status: ConnectionStatus } }
 	| { type: 'gameState'; data: GameStateAPI }
 	| { type: 'missionState'; data: MissionState }
 	| { type: 'moveHistory'; data: MoveHistoryWire };
@@ -189,6 +190,7 @@ const VALID_MESSAGE_TYPES = new Set<WebSocketMessage['type']>([
 	'boardState',
 	'cardState',
 	'playerState',
+	'playerConnection',
 	'gameState',
 	'missionState',
 	'moveHistory'

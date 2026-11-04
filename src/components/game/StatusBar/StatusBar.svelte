@@ -31,55 +31,59 @@
 		continents
 	}: Props = $props();
 
-	let mobileExpanded = $state(false);
+	let position = $state({ x: 16, y: 16 });
+	let drag = $state<{ id: number; x: number; y: number } | null>(null);
+	let expanded = $state(false);
+	let panelEl = $state<HTMLElement>();
+	function clampPosition() {
+		if (!panelEl) return;
+		position = {
+			x: Math.max(8, Math.min(innerWidth - panelEl.offsetWidth - 8, position.x)),
+			y: Math.max(8, Math.min(innerHeight - panelEl.offsetHeight - 8, position.y))
+		};
+	}
+	function startDrag(event: PointerEvent) {
+		if ((event.target as HTMLElement).closest('button')) return;
+		drag = { id: event.pointerId, x: event.clientX - position.x, y: event.clientY - position.y };
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+	}
+	function moveDrag(event: PointerEvent) {
+		if (!drag || drag.id !== event.pointerId) return;
+		position = { x: event.clientX - drag.x, y: event.clientY - drag.y };
+		clampPosition();
+	}
+	function nudge(e: KeyboardEvent) {
+		const d = e.shiftKey ? 24 : 8;
+		if (e.key === 'ArrowLeft') position.x -= d;
+		else if (e.key === 'ArrowRight') position.x += d;
+		else if (e.key === 'ArrowUp') position.y -= d;
+		else if (e.key === 'ArrowDown') position.y += d;
+		else return;
+		e.preventDefault();
+		clampPosition();
+	}
 </script>
 
-<!-- Desktop sidebar -->
-<aside class="glass hidden h-full w-64 flex-col gap-4 rounded-2xl p-4 md:flex">
-	<div class="flex items-center gap-2">
-		<h2 class="text-sm font-bold uppercase tracking-wider text-gray-400">Players</h2>
+<aside bind:this={panelEl} class="game-float glass fixed z-30 w-[min(19rem,calc(100vw-1rem))] rounded-2xl p-3 shadow-2xl" style:left="{position.x}px" style:top="{position.y}px" aria-label="Informações da partida">
+	<div role="toolbar" aria-label="Arrastar painel de jogadores; use as setas para reposicionar" tabindex="0" onkeydown={nudge} class="mb-2 flex cursor-move touch-none items-center justify-between border-b border-white/10 pb-2" onpointerdown={startDrag} onpointermove={moveDrag} onpointerup={() => drag = null} onpointercancel={() => drag = null}>
+		<h2 class="text-xs font-bold uppercase tracking-wider text-gray-300">Jogadores · arraste</h2>
+		<div class="flex items-center gap-2">
 		<span
 			class="h-2 w-2 rounded-full"
 			class:bg-green-500={connected}
 			class:bg-red-500={!connected}
 			role="status"
-			aria-label={connected ? 'Connected to server' : 'Disconnected from server'}
-			title={connected ? 'Connected to server' : 'Disconnected from server'}
+			aria-label={connected ? 'Conectado ao servidor' : 'Desconectado do servidor'}
+			title={connected ? 'Conectado ao servidor' : 'Desconectado do servidor'}
 		></span>
+		<button type="button" class="rounded px-2 text-xs text-gray-300 hover:bg-white/10" aria-expanded={expanded} onclick={() => expanded = !expanded}>{expanded ? 'Recolher' : 'Detalhes'}</button>
+		</div>
 	</div>
-
 	<PlayerList {players} {currentTurn} {myUserId} />
-
-	<div class="mt-auto">
+	{#if expanded}<div class="mt-3 max-h-48 overflow-auto">
 		<MissionDisplay {mission} {boardState} {myUserId} {players} {mapLayers} {continents} />
-	</div>
+	</div>{/if}
 </aside>
 
-<!-- Mobile bottom bar -->
-<div class="glass fixed right-0 bottom-0 left-0 z-30 md:hidden">
-	<button
-		onclick={() => (mobileExpanded = !mobileExpanded)}
-		class="flex w-full cursor-pointer items-center justify-between px-4 py-3"
-	>
-		<div class="flex items-center gap-2">
-			<h2 class="text-xs font-bold uppercase tracking-wider text-gray-400">Players</h2>
-			<span
-				class="h-2 w-2 rounded-full"
-				class:bg-green-500={connected}
-				class:bg-red-500={!connected}
-				role="status"
-				aria-label={connected ? 'Connected to server' : 'Disconnected from server'}
-			></span>
-		</div>
-		<span class="text-xs text-gray-400">{mobileExpanded ? '▼' : '▲'}</span>
-	</button>
-
-	{#if mobileExpanded}
-		<div class="max-h-64 overflow-y-auto px-4 pb-4">
-			<PlayerList {players} {currentTurn} {myUserId} />
-			<div class="mt-3">
-				<MissionDisplay {mission} {boardState} {myUserId} {players} {mapLayers} {continents} />
-			</div>
-		</div>
-	{/if}
-</div>
+<svelte:window onresize={clampPosition} />
+<style>.game-float { max-height: calc(100dvh - 1rem); overflow: auto; }</style>

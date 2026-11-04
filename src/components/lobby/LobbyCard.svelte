@@ -15,9 +15,9 @@
 
 <div class="glass rounded-xl p-4 transition-all hover:border-accent/30">
 	<div class="mb-2 flex items-center justify-between">
-		<h3 class="font-semibold">{lobby.owner}'s game</h3>
+		<h3 class="font-semibold">Partida de {lobby.owner}</h3>
 		<span class="rounded-full bg-surface-600 px-2 py-0.5 text-xs">
-			{lobby.participants.length} players
+			{lobby.participants.length} {lobby.participants.length === 1 ? 'jogador' : 'jogadores'}
 		</span>
 	</div>
 
@@ -34,6 +34,6 @@
 		data-testid="join-lobby-btn"
 		class="w-full cursor-pointer rounded-lg bg-accent py-2 text-sm font-semibold transition-colors hover:bg-accent-light"
 	>
-		Join
+		Entrar
 	</button>
 </div>

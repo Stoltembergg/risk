@@ -29,7 +29,7 @@
 
 	function playerNickname() {
 		const nickname = auth.user?.name?.trim();
-		if (!nickname) error = 'Enter a valid nickname';
+		if (!nickname) error = 'Informe um apelido válido.';
 		return nickname;
 	}
 
@@ -57,13 +57,13 @@
 		if (hasInvite) await goto('/', { replaceState: true, noScroll: true });
 		await loadData();
 		if (!hasInvite) return;
-		if (!id) { error = 'Invalid lobby invitation'; return; }
-		if (!nickname) { error = 'Enter a valid nickname'; return; }
+		if (!id) { error = 'O convite para a sala é inválido.'; return; }
+		if (!nickname) { error = 'Informe um apelido válido.'; return; }
 		try {
 			isLobbyOwner = await enterInvite(id, nickname);
 			inLobbyId = id;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to join lobby';
+		} catch {
+			error = 'Não foi possível entrar na sala. Verifique o convite e tente novamente.';
 		}
 	}
 
@@ -75,8 +75,8 @@
 			const [lobbyData, gameData] = await Promise.all([getLobbies(), getGames()]);
 			lobbies = lobbyData?.joinable ?? [];
 			games = gameData ?? [];
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load data';
+		} catch {
+			error = 'Não foi possível carregar as salas e partidas.';
 		} finally {
 			loading = false;
 		}
@@ -92,8 +92,8 @@
 				inLobbyId = String(result.lobbyId);
 				isLobbyOwner = true;
 			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create lobby';
+		} catch {
+			error = 'Não foi possível criar a sala. Tente novamente.';
 		}
 	}
 
@@ -105,8 +105,8 @@
 			await joinLobby(lobbyId, nickname);
 			inLobbyId = lobbyId;
 			isLobbyOwner = false;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to join lobby';
+		} catch {
+			error = 'Não foi possível entrar na sala. Tente novamente.';
 		}
 	}
 
@@ -141,7 +141,7 @@
 					data-testid="signout-btn"
 					class="cursor-pointer rounded-lg bg-surface-600 px-3 py-1.5 text-sm transition-colors hover:bg-surface-500"
 				>
-					Leave
+					Sair
 				</button>
 			</div>
 		</header>
@@ -160,7 +160,7 @@
 					data-testid="signout-btn"
 					class="cursor-pointer rounded-lg bg-surface-600 px-3 py-1.5 text-sm transition-colors hover:bg-surface-500"
 				>
-					Leave
+					Sair
 				</button>
 			</div>
 		</header>
@@ -179,7 +179,7 @@
 					data-testid="create-game-btn"
 					class="cursor-pointer rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 				>
-					Create Game
+					Criar partida
 				</button>
 			</div>
 
@@ -192,7 +192,7 @@
 					class:text-white={tab === 'lobbies'}
 					class:text-gray-400={tab !== 'lobbies'}
 				>
-					Lobbies
+				Salas
 				</button>
 				<button
 					onclick={() => (tab = 'games')}
@@ -201,7 +201,7 @@
 					class:text-white={tab === 'games'}
 					class:text-gray-400={tab !== 'games'}
 				>
-					My Games
+				Minhas partidas
 				</button>
 			</div>
 
@@ -221,8 +221,8 @@
 					/>
 				{:else if games.length === 0}
 					<div class="py-12 text-center text-gray-500">
-						<p class="mb-2 text-lg">No active games</p>
-						<p class="text-sm">Join or create a lobby to start playing!</p>
+						<p class="mb-2 text-lg">Nenhuma partida ativa</p>
+						<p class="text-sm">Entre ou crie uma sala para começar a jogar!</p>
 					</div>
 				{:else}
 					<div class="grid gap-3 sm:grid-cols-2">
@@ -232,7 +232,7 @@
 								class="glass cursor-pointer rounded-xl p-4 text-left transition-all hover:border-accent/30"
 							>
 								<div class="font-semibold">Game #{game.id}</div>
-								<div class="text-sm text-gray-400">Click to rejoin</div>
+								<div class="text-sm text-gray-400">Clique para voltar à partida</div>
 							</button>
 						{/each}
 					</div>

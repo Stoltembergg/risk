@@ -82,7 +82,7 @@
 			});
 			playAttack();
 			moveState.setAttackSource(sourceId);
-		}, 'Attack failed');
+		}, 'Falha ao atacar. Tente novamente.');
 	}
 
 	/**
@@ -188,13 +188,13 @@
 	async function handleAdvance() {
 		await action.run(async () => {
 			await advance(gameState.id, { currentPhase: 'attack' });
-		}, 'Advance failed');
+		}, 'Não foi possível avançar a fase.');
 	}
 </script>
 
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
-		<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Attack</h3>
+		<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Ataque</h3>
 		<StepProgress current={currentStep} total={3} />
 	</div>
 
@@ -205,52 +205,52 @@
 				<div
 					class="h-3 w-3 animate-spin rounded-full border-2 border-red-400 border-t-transparent"
 				></div>
-				<span class="text-sm font-semibold text-red-400">Blitz in progress...</span>
+				<span class="text-sm font-semibold text-red-400">Ataque total em andamento…</span>
 			</div>
 			<div class="flex gap-4 text-xs">
-				<span class="text-red-300">Your losses: {blitzCasualties.attacker}</span>
-				<span class="text-blue-300">Enemy losses: {blitzCasualties.defender}</span>
+				<span class="text-red-300">Suas perdas: {blitzCasualties.attacker}</span>
+				<span class="text-blue-300">Perdas inimigas: {blitzCasualties.defender}</span>
 			</div>
 			<button
 				onclick={cancelBlitz}
 				class="w-full cursor-pointer rounded-lg bg-yellow-600 py-2 text-sm font-semibold transition-colors hover:bg-yellow-500"
 			>
-				Cancel Blitz
+				Cancelar ataque total
 			</button>
 		</div>
 	{:else if !interaction.sourceRegionId}
 		<p class="text-sm text-gray-500">
-			<span class="text-xs text-gray-400">Step 1:</span> Select your region (2+ troops)
+			<span class="text-xs text-gray-400">Etapa 1:</span> Escolha seu território (2+ tropas)
 		</p>
 	{:else if !interaction.targetRegionId}
 		<div class="space-y-2">
 			<div class="text-sm">
-				<span class="text-gray-400">From:</span>
+				<span class="text-gray-400">Origem:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.sourceRegionId)} ({sourceRegion?.troops})</span
 				>
 			</div>
 			<p class="text-sm text-gray-500">
-				<span class="text-xs text-gray-400">Step 2:</span> Click enemy to select target
+				<span class="text-xs text-gray-400">Etapa 2:</span> Clique em um território inimigo para escolher o alvo
 			</p>
-			<p class="text-xs text-gray-600">Shift+Click to blitz</p>
+			<p class="text-xs text-gray-600">Shift + clique para ataque total</p>
 			<button
 				onclick={() => moveState.setAttackSource('')}
 				class="cursor-pointer text-xs text-gray-500 underline hover:text-gray-300"
 			>
-				Cancel selection
+				Cancelar seleção
 			</button>
 		</div>
 	{:else}
 		<div class="space-y-3">
 			<div class="text-sm">
-				<span class="text-gray-400">From:</span>
+				<span class="text-gray-400">Origem:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.sourceRegionId)} ({sourceRegion?.troops})</span
 				>
 			</div>
 			<div class="text-sm">
-				<span class="text-gray-400">Target:</span>
+				<span class="text-gray-400">Alvo:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.targetRegionId)} ({targetRegion?.troops})</span
 				>
@@ -259,7 +259,7 @@
 			<div>
 				<TroopSlider
 					id="attack-slider"
-					label="Attacking troops"
+					label="Tropas atacantes"
 					min={1}
 					max={maxAttackingTroops}
 					value={interaction.attackingTroops}
@@ -279,16 +279,16 @@
 					data-testid="attack-btn"
 					class="flex-1 cursor-pointer rounded-lg bg-red-600 py-2 text-sm font-semibold transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{action.submitting ? 'Attacking...' : `Attack with ${interaction.attackingTroops}`}
+					{action.submitting ? 'Atacando…' : `Atacar com ${interaction.attackingTroops} tropas`}
 				</button>
 				<button
 					onclick={handleBlitz}
 					disabled={action.submitting}
 					data-testid="blitz-btn"
 					class="cursor-pointer rounded-lg bg-orange-600 px-3 py-2 text-sm font-semibold transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
-					title="Repeat attacks until one side is depleted"
+					title="Repetir ataques até que um dos lados fique sem tropas"
 				>
-					Blitz
+					Ataque total
 				</button>
 			</div>
 		</div>
@@ -300,7 +300,7 @@
 			data-testid="skip-attack-btn"
 			class="w-full cursor-pointer rounded-lg bg-surface-600 py-2 text-sm transition-colors hover:bg-surface-500"
 		>
-			Skip to Reinforce
+			Avançar para redistribuição
 		</button>
 	{/if}
 </div>

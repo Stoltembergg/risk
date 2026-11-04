@@ -65,55 +65,55 @@
 				movingTroops: interaction.movingTroops
 			});
 			moveState.setReinforceSource('');
-		}, 'Reinforce failed');
+		}, 'Falha ao redistribuir tropas. Tente novamente.');
 	}
 
 	/** Ends the turn by advancing past the reinforce phase. */
 	async function handleAdvance() {
 		await action.run(async () => {
 			await advance(gameState.id, { currentPhase: 'reinforce' });
-		}, 'Advance failed');
+		}, 'Não foi possível avançar a fase.');
 	}
 </script>
 
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
-		<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Reinforce</h3>
+		<h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Redistribuir tropas</h3>
 		<StepProgress current={currentStep} total={3} />
 	</div>
 
 	{#if !interaction.sourceRegionId}
 		<p class="text-sm text-gray-500">
-			<span class="text-xs text-gray-400">Step 1/3:</span> Select your region (2+ troops)
+			<span class="text-xs text-gray-400">Etapa 1/3:</span> Escolha seu território (2+ tropas)
 		</p>
 	{:else if !interaction.targetRegionId}
 		<div class="space-y-2">
 			<div class="text-sm">
-				<span class="text-gray-400">From:</span>
+				<span class="text-gray-400">Origem:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.sourceRegionId)} ({sourceRegion?.troops})</span
 				>
 			</div>
 			<p class="text-sm text-gray-500">
-				<span class="text-xs text-gray-400">Step 2/3:</span> Select a connected friendly region
+				<span class="text-xs text-gray-400">Etapa 2/3:</span> Escolha um território seu conectado
 			</p>
 			<button
 				onclick={() => moveState.setReinforceSource('')}
 				class="cursor-pointer text-xs text-gray-500 underline hover:text-gray-300"
 			>
-				Cancel selection
+				Cancelar seleção
 			</button>
 		</div>
 	{:else}
 		<div class="space-y-3">
 			<div class="text-sm">
-				<span class="text-gray-400">From:</span>
+				<span class="text-gray-400">Origem:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.sourceRegionId)} ({sourceRegion?.troops})</span
 				>
 			</div>
 			<div class="text-sm">
-				<span class="text-gray-400">To:</span>
+				<span class="text-gray-400">Destino:</span>
 				<span class="font-semibold"
 					>{formatRegionName(interaction.targetRegionId)} ({targetRegion?.troops})</span
 				>
@@ -122,7 +122,7 @@
 			<div>
 				<TroopSlider
 					id="reinforce-slider"
-					label="Moving troops"
+					label="Tropas a mover"
 					min={1}
 					max={maxMovingTroops}
 					value={interaction.movingTroops}
@@ -141,7 +141,7 @@
 				data-testid="reinforce-btn"
 				class="w-full cursor-pointer rounded-lg bg-accent py-2 text-sm font-semibold transition-colors hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
 			>
-				{action.submitting ? 'Moving...' : `Move ${interaction.movingTroops} troops`}
+				{action.submitting ? 'Movendo…' : `Mover ${interaction.movingTroops} tropas`}
 			</button>
 		</div>
 	{/if}
@@ -151,6 +151,6 @@
 		data-testid="end-turn-btn"
 		class="w-full cursor-pointer rounded-lg bg-surface-600 py-2 text-sm transition-colors hover:bg-surface-500"
 	>
-		End Turn
+		Encerrar turno
 	</button>
 </div>

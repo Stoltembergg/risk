@@ -41,7 +41,7 @@
 			navigating = true;
 			void goto(`/game/${gameId}`).catch(() => {
 				navigating = false;
-				error = 'Failed to open game. Reconnect to try again.';
+				error = 'Não foi possível abrir a partida. Reconecte-se e tente novamente.';
 			});
 		}
 	});
@@ -54,7 +54,7 @@
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch {
-			error = 'Failed to copy — select the URL manually';
+			error = 'Não foi possível copiar. Selecione o endereço manualmente.';
 		}
 	}
 
@@ -67,7 +67,7 @@
 		try {
 			await startLobby(lobbyId);
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to start game';
+			error = 'Não foi possível iniciar a partida. Tente novamente.';
 		} finally {
 			starting = false;
 		}
@@ -76,20 +76,20 @@
 
 <div class="glass mx-auto max-w-md rounded-2xl p-6">
 	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-bold">Waiting Room</h2>
+		<h2 class="text-xl font-bold">Sala de espera</h2>
 		<div class="flex items-center gap-2">
 			<button
 				onclick={copyInviteLink}
 				class="cursor-pointer rounded-lg bg-surface-600 px-3 py-1.5 text-xs transition-colors hover:bg-surface-500"
 			>
-				{copied ? 'Copied!' : 'Copy invite link'}
+				{copied ? 'Copiado!' : 'Copiar convite'}
 			</button>
 			<span
 				class="h-2 w-2 rounded-full"
 				class:bg-green-500={lobbyWs.connected}
 				class:bg-red-500={!lobbyWs.connected}
 				role="status"
-				aria-label={lobbyWs.connected ? 'Connected' : 'Disconnected'}
+			aria-label={lobbyWs.connected ? 'Conectado' : 'Desconectado'}
 			></span>
 		</div>
 	</div>
@@ -106,7 +106,7 @@
 				<span class="font-medium">
 					{participant.name}
 					{#if participant.userId === auth.user?.id}
-						<span class="text-xs text-gray-400">(you)</span>
+						<span class="text-xs text-gray-400">(você)</span>
 					{/if}
 				</span>
 			</div>
@@ -116,7 +116,7 @@
 			<div
 				class="rounded-lg border border-dashed border-gray-600 px-4 py-2.5 text-center text-sm text-gray-500"
 			>
-				Waiting for players... ({3 - participants.length} more needed)
+				Aguardando jogadores… faltam {3 - participants.length}
 			</div>
 		{/if}
 	</div>
@@ -130,7 +130,7 @@
 			onclick={onLeave}
 			class="flex-1 cursor-pointer rounded-lg bg-surface-600 py-2.5 text-sm transition-colors hover:bg-surface-500"
 		>
-			Leave
+			Sair
 		</button>
 
 		{#if isOwner}
@@ -141,11 +141,11 @@
 				class="flex-1 cursor-pointer rounded-lg bg-accent py-2.5 text-sm font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 			>
 				{#if starting}
-					Starting...
+					Iniciando…
 				{:else if !canStart}
-					Need {3 - participants.length} more
+					Faltam {3 - participants.length} jogadores
 				{:else}
-					Start Game
+					Iniciar partida
 				{/if}
 			</button>
 		{/if}

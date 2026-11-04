@@ -4,9 +4,9 @@
 	 * (Cards, Deploy, Attack, Conquer, Reinforce) based on the current move interaction.
 	 * Renders as a right-side panel on desktop (md+) and a collapsible bottom sheet on mobile.
 	 */
-	import { fly, slide } from 'svelte/transition';
 	import type { CardState, ConquerPhaseState, GameState, Region } from '$lib/types/game';
 	import type { MoveInteraction, createMoveState } from '$lib/state/move-state.svelte';
+	import { onMount } from 'svelte';
 	import DeployAction from './DeployAction.svelte';
 	import AttackAction from './AttackAction.svelte';
 	import ConquerAction from './ConquerAction.svelte';
@@ -37,7 +37,41 @@
 		onNextBoardState
 	}: Props = $props();
 
-	let mobileCollapsed = $state(false);
+	let position = $state({ x: 16, y: 100 });
+	let drag = $state<{ id: number; x: number; y: number } | null>(null);
+	let panelEl = $state<HTMLElement>();
+	onMount(() => {
+		position = { x: Math.max(8, innerWidth - 328), y: 84 };
+		clampPosition();
+	});
+	function clampPosition() {
+		if (!panelEl) return;
+		position = {
+			x: Math.max(8, Math.min(innerWidth - panelEl.offsetWidth - 8, position.x)),
+			y: Math.max(8, Math.min(innerHeight - panelEl.offsetHeight - 8, position.y))
+		};
+	}
+	function startDrag(event: PointerEvent) {
+		if ((event.target as HTMLElement).closest('button')) return;
+		drag = { id: event.pointerId, x: event.clientX - position.x, y: event.clientY - position.y };
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+	}
+	function moveDrag(event: PointerEvent) {
+		if (!drag || drag.id !== event.pointerId) return;
+		position = { x: event.clientX - drag.x, y: event.clientY - drag.y };
+		clampPosition();
+	}
+	function nudge(e: KeyboardEvent) {
+		const delta = e.shiftKey ? 24 : 8;
+		if (e.key === 'ArrowLeft') position.x -= delta;
+		else if (e.key === 'ArrowRight') position.x += delta;
+		else if (e.key === 'ArrowUp') position.y -= delta;
+		else if (e.key === 'ArrowDown') position.y += delta;
+		else return;
+		e.preventDefault();
+		clampPosition();
+	}
+	let visible = $state(true);
 </script>
 
 {#snippet actionContent()}
@@ -97,35 +131,25 @@
 			}}
 			{moveState}
 		/>
-	{:else}
-		<p class="text-sm text-gray-500">Waiting...</p>
+{:else}
+		<p class="text-sm text-gray-500">Aguardando…</p>
 	{/if}
 {/snippet}
 
-<!-- Desktop: right panel -->
-<aside
-	class="glass hidden w-72 flex-col rounded-2xl p-4 md:flex"
-	transition:fly={{ x: 50, duration: 200 }}
->
-	{@render actionContent()}
-</aside>
-
-<!-- Mobile: bottom sheet (collapsible) -->
-<div
-	class="glass fixed right-0 bottom-0 left-0 z-40 rounded-t-2xl md:hidden"
-	transition:fly={{ y: 100, duration: 200 }}
->
-	<button
-		onclick={() => (mobileCollapsed = !mobileCollapsed)}
-		class="flex w-full cursor-pointer items-center justify-center gap-1 py-2"
-		aria-label={mobileCollapsed ? 'Expand action panel' : 'Collapse action panel'}
-	>
-		<div class="h-1 w-8 rounded-full bg-gray-500"></div>
-		<span class="text-xs text-gray-500">{mobileCollapsed ? '▲' : '▼'}</span>
-	</button>
-	{#if !mobileCollapsed}
-		<div class="max-h-[35dvh] overflow-y-auto px-4 pb-4" transition:slide={{ duration: 200 }}>
-			{@render actionContent()}
+{#if visible}
+	<aside bind:this={panelEl} class="game-float glass fixed z-40 w-[min(19rem,calc(100vw-1rem))] rounded-2xl p-4 shadow-2xl" style:left="{position.x}px" style:top="{position.y}px" aria-label="Ações da rodada">
+		<div role="toolbar" aria-label="Arrastar painel de ações; use as setas para reposicionar" tabindex="0" onkeydown={nudge} class="mb-3 flex cursor-move touch-none items-center justify-between border-b border-white/10 pb-2" onpointerdown={startDrag} onpointermove={moveDrag} onpointerup={() => drag = null} onpointercancel={() => drag = null}>
+			<span class="text-xs font-bold uppercase tracking-[.16em] text-accent-light">Painel de ação · arraste</span>
+			<button type="button" aria-label="Fechar painel" class="rounded px-2 text-gray-400 hover:bg-white/10" onclick={() => visible = false}>×</button>
 		</div>
-	{/if}
-</div>
+		{@render actionContent()}
+	</aside>
+{:else}
+	<button type="button" class="glass fixed bottom-4 right-4 z-40 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xl" onclick={() => visible = true}>Abrir ações</button>
+{/if}
+
+<svelte:window onresize={clampPosition} />
+
+<style>
+	.game-float { max-height: calc(100dvh - 1rem); overflow: auto; }
+</style>

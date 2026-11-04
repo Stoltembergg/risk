@@ -46,7 +46,7 @@
 	transition:fade={{ duration: 300 }}
 	role="dialog"
 	aria-modal="true"
-	aria-label={won ? 'Victory' : 'Defeat'}
+	aria-label={won ? 'Vitória' : 'Derrota'}
 	tabindex="-1"
 	onkeydown={handleKeydown}
 >
@@ -59,9 +59,9 @@
 				class="mb-2 text-4xl font-bold text-green-400"
 				in:fade={{ delay: 200 }}
 			>
-				Victory!
+				Vitória!
 			</h2>
-			<p class="text-lg text-gray-300" in:fade={{ delay: 300 }}>You conquered the world!</p>
+			<p class="text-lg text-gray-300" in:fade={{ delay: 300 }}>Você conquistou o mundo!</p>
 		{:else}
 			<div class="mb-4 text-6xl" in:scale={{ duration: 400, start: 0.5 }}>&#128128;</div>
 			<h2
@@ -69,10 +69,10 @@
 				class="mb-2 text-4xl font-bold text-red-400"
 				in:fade={{ delay: 200 }}
 			>
-				Defeated
+				Derrota
 			</h2>
 			<p class="text-lg text-gray-300" in:fade={{ delay: 300 }}>
-				<span class="font-semibold">{playerName}</span> won the game
+				<span class="font-semibold">{playerName}</span> venceu a partida
 			</p>
 		{/if}
 
@@ -80,19 +80,19 @@
 			<div class="mx-auto mt-6 grid max-w-xs grid-cols-2 gap-3">
 				<div class="rounded-lg bg-white/10 px-3 py-2" in:fade={{ delay: 400 }}>
 					<div class="text-lg font-bold">{stats.territories}</div>
-					<div class="text-xs text-gray-400">Territories</div>
+					<div class="text-xs text-gray-400">Territórios</div>
 				</div>
 				<div class="rounded-lg bg-white/10 px-3 py-2" in:fade={{ delay: 500 }}>
 					<div class="text-lg font-bold">{stats.totalTroops}</div>
-					<div class="text-xs text-gray-400">Total Troops</div>
+					<div class="text-xs text-gray-400">Tropas totais</div>
 				</div>
 				<div class="rounded-lg bg-white/10 px-3 py-2" in:fade={{ delay: 600 }}>
 					<div class="text-lg font-bold">{stats.cardsHeld}</div>
-					<div class="text-xs text-gray-400">Cards Held</div>
+					<div class="text-xs text-gray-400">Cartas</div>
 				</div>
 				<div class="rounded-lg bg-white/10 px-3 py-2" in:fade={{ delay: 700 }}>
 					<div class="text-lg font-bold">{stats.turnsPlayed}</div>
-					<div class="text-xs text-gray-400">Turns Played</div>
+					<div class="text-xs text-gray-400">Turnos jogados</div>
 				</div>
 			</div>
 		{/if}
@@ -103,7 +103,7 @@
 			data-testid="back-to-lobby"
 			class="mt-8 inline-block rounded-lg bg-accent px-6 py-3 font-semibold transition-colors hover:bg-accent-light"
 		>
-			Back to Lobby
+			Voltar à sala
 		</a>
 	</div>
 </div>

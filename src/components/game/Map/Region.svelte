@@ -11,6 +11,7 @@
 	import type { Region } from '$lib/types/game';
 	import type { PhaseType } from '$lib/types/game';
 	import type { MapLayer } from '$lib/types/map';
+	import { formatRegionName } from '$lib/utils/format';
 
 	interface Props {
 		layer: MapLayer;
@@ -41,7 +42,7 @@
 	}: Props = $props();
 
 	const troops = $derived(region?.troops ?? 0);
-	const regionName = $derived(layer.name);
+	const regionName = $derived(formatRegionName(layer.id));
 
 	// Dynamic badge sizing based on troop count
 	const badgeRadius = $derived(troops >= 10 ? 13 : troops > 5 ? 12 : 11);
@@ -131,25 +132,17 @@
 	/>
 
 	{#if troops > 0 && center.x !== 0}
-		<circle
-			cx={center.x}
-			cy={center.y}
-			r={badgeRadius}
-			fill="rgba(0,0,0,0.7)"
-			stroke={playerColor}
-			stroke-width="1.5"
-		/>
 		<text
 			x={center.x}
 			y={center.y}
 			text-anchor="middle"
 			dominant-baseline="central"
 			fill="white"
-			font-size={badgeFontSize}
-			font-weight="600"
-			font-family="Inter, sans-serif"
-			stroke="rgba(0,0,0,0.8)"
-			stroke-width="2.5"
+			font-family="Georgia, serif"
+			font-size="14"
+			font-weight="700"
+			stroke="rgba(10,15,20,0.95)"
+			stroke-width="3.5"
 			paint-order="stroke"
 		>
 			{Math.round($displayTroops)}
@@ -178,7 +171,7 @@
 					font-size="7"
 					font-family="Inter, sans-serif"
 				>
-					Click to attack · Shift to blitz
+					Clique para atacar · Shift + clique para ataque total
 				</text>
 				<text
 					x={center.x}
@@ -190,7 +183,7 @@
 					font-weight="600"
 					font-family="Inter, sans-serif"
 				>
-					Your {sourceRegion?.troops} vs Their {region?.troops}
+					Suas {sourceRegion?.troops} contra {region?.troops} inimigas
 				</text>
 			{:else}
 				<rect

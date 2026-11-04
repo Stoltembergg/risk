@@ -8,6 +8,7 @@
 	import type { Region as RegionType } from '$lib/types/game';
 	import type { PhaseType } from '$lib/types/game';
 	import type { MapLayer, Continent as ContinentType } from '$lib/types/map';
+	import { formatContinentName } from '$lib/utils/format';
 	import Region from './Region.svelte';
 
 	interface Props {
@@ -103,7 +104,7 @@
 				stroke-width="2"
 				paint-order="stroke"
 			>
-				{controlledBy.continentName} +{controlledBy.bonusTroops}
+				{formatContinentName(controlledBy.continentName)} +{controlledBy.bonusTroops}
 			</text>
 		</g>
 	{/if}

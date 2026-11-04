@@ -18,14 +18,14 @@
 
 {#if lobbies.length === 0}
 	<div class="py-12 text-center text-gray-500">
-		<p class="mb-2 text-lg">No lobbies available</p>
-		<p class="mb-4 text-sm">Create one to get started!</p>
+		<p class="mb-2 text-lg">Nenhuma sala disponível</p>
+		<p class="mb-4 text-sm">Crie uma sala para começar a jogar!</p>
 		{#if onCreate}
 			<button
 				onclick={onCreate}
 				class="cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-light"
 			>
-				Create Lobby
+				Criar sala
 			</button>
 		{/if}
 	</div>

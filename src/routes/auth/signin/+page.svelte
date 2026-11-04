@@ -24,8 +24,8 @@
 		submitting = true;
 		try {
 			await auth.signIn(name);
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Sign in failed';
+		} catch {
+			error = 'Não foi possível entrar. Confira o apelido e tente novamente.';
 		} finally {
 			submitting = false;
 		}
@@ -34,8 +34,8 @@
 
 <div class="flex min-h-dvh items-center justify-center">
 	<div class="glass w-full max-w-sm rounded-2xl p-8">
-		<h1 class="mb-2 text-center text-2xl font-bold">Join the table</h1>
-		<p class="mb-6 text-center text-sm text-gray-400">Choose a nickname to enter Risk.</p>
+		<h1 class="mb-2 text-center text-2xl font-bold">Entre na mesa</h1>
+		<p class="mb-6 text-center text-sm text-gray-400">Escolha um apelido para jogar Risk.</p>
 
 		{#if error}
 			<div
@@ -48,7 +48,7 @@
 
 		<form onsubmit={handleSubmit} class="space-y-4">
 			<div>
-				<label for="name" class="mb-1 block text-sm text-gray-400">Nickname</label>
+				<label for="name" class="mb-1 block text-sm text-gray-400">Apelido</label>
 				<input
 					id="name"
 					type="text"
@@ -58,7 +58,7 @@
 					maxlength="32"
 					autocomplete="nickname"
 					class="w-full rounded-lg bg-surface-700 px-4 py-2.5 text-gray-100 outline-none transition-colors focus:ring-2 focus:ring-accent"
-					placeholder="Your name at the table"
+					placeholder="Como quer ser chamado na mesa"
 				/>
 			</div>
 			<button
@@ -67,7 +67,7 @@
 				data-testid="signin-submit"
 				class="w-full cursor-pointer rounded-lg bg-accent py-2.5 font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 			>
-				{submitting ? 'Entering...' : 'Enter game'}
+				{submitting ? 'Entrando…' : 'Entrar na partida'}
 			</button>
 		</form>
 

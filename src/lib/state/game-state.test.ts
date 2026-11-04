@@ -20,6 +20,24 @@ describe('createGameState', () => {
 	});
 
 	describe('initial state', () => {
+		it('parses backend presence messages and updates only the matching player', () => {
+			const presence = (userId: string, status: string) =>
+				parseWebSocketMessage(JSON.stringify({ type: 'playerConnection', data: { userId, status } }));
+			state.handleMessage(presence('user1', 'connected'));
+			expect(state.playersState).toBeNull();
+			const players = ['user1', 'user2'].map((userId, index) => ({
+				userId, index, name: userId, cardCount: 2, status: 'alive' as const
+			}));
+			state.handleMessage({ type: 'playerState', data: { players } });
+			for (const status of ['connected', 'disconnected']) {
+				state.handleMessage(presence('user1', status));
+				expect(state.playersState?.players).toEqual([
+					{ ...players[0], connectionStatus: status }, players[1]
+				]);
+			}
+			state.handleMessage(presence('unknown', 'connected'));
+			expect(state.playersState?.players).toHaveLength(2);
+		});
 		it('applies the production playerView including the camelCase mission and board listener', async () => {
 			const data = {
 				game: { id: 1, turn: 0, seq: 1, winnerUserId: '' },

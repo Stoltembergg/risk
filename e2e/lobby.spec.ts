@@ -31,7 +31,6 @@ test.describe('Lobby', () => {
 		try {
 			// Player 1 signs in and creates a lobby via UI
 			await authenticateContext(page1, player1.email, TEST_PASSWORD);
-			await page1.locator('[data-testid="player-name-input"]').fill('Player1');
 			await page1.locator('[data-testid="create-game-btn"]').click();
 
 			// Player 1 should see the waiting room

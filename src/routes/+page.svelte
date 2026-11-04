@@ -27,8 +27,11 @@
 	let inLobbyId = $state<string | null>(null);
 	let isLobbyOwner = $state(false);
 
-	// Create lobby state
-	let playerName = $state('');
+	function playerNickname() {
+		const nickname = auth.user?.name?.trim();
+		if (!nickname) error = 'Enter a valid nickname';
+		return nickname;
+	}
 
 	// Auth guard: redirect to sign-in if not authenticated
 	$effect(() => {
@@ -80,10 +83,11 @@
 	}
 
 	async function handleCreateLobby() {
-		if (!playerName.trim()) return;
+		const nickname = playerNickname();
+		if (!nickname) return;
 		error = '';
 		try {
-			const result = (await createLobby(playerName.trim())) as { lobbyId?: number };
+			const result = (await createLobby(nickname)) as { lobbyId?: number };
 			if (result?.lobbyId) {
 				inLobbyId = String(result.lobbyId);
 				isLobbyOwner = true;
@@ -93,26 +97,12 @@
 		}
 	}
 
-	/**
-	 * Joins an existing lobby. If the player name is empty, focuses the name input with
-	 * a red ring highlight instead of proceeding.
-	 */
 	async function handleJoinLobby(lobbyId: string) {
-		if (!playerName.trim()) {
-			error = 'Enter your name first';
-			const input = document.querySelector<HTMLInputElement>('[data-testid="player-name-input"]');
-			if (input) {
-				input.focus();
-				input.classList.add('ring-2', 'ring-red-400');
-				input.addEventListener('input', () => input.classList.remove('ring-2', 'ring-red-400'), {
-					once: true
-				});
-			}
-			return;
-		}
+		const nickname = playerNickname();
+		if (!nickname) return;
 		error = '';
 		try {
-			await joinLobby(lobbyId, playerName.trim());
+			await joinLobby(lobbyId, nickname);
 			inLobbyId = lobbyId;
 			isLobbyOwner = false;
 		} catch (err) {
@@ -182,19 +172,10 @@
 				</div>
 			{/if}
 
-			<!-- Player name + create -->
+			<!-- Create lobby -->
 			<div class="mx-auto mb-6 flex max-w-2xl items-center gap-3">
-				<input
-					type="text"
-					bind:value={playerName}
-					placeholder="Your player name"
-					maxlength="20"
-					data-testid="player-name-input"
-					class="flex-1 rounded-lg bg-surface-700 px-4 py-2.5 text-gray-100 outline-none transition-colors focus:ring-2 focus:ring-accent"
-				/>
 				<button
 					onclick={handleCreateLobby}
-					disabled={!playerName.trim()}
 					data-testid="create-game-btn"
 					class="cursor-pointer rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-accent-light disabled:opacity-50"
 				>
@@ -236,12 +217,7 @@
 					<LobbyList
 						{lobbies}
 						onJoin={handleJoinLobby}
-						onCreate={() => {
-							const input = document.querySelector<HTMLInputElement>(
-								'[data-testid="player-name-input"]'
-							);
-							if (input) input.focus();
-						}}
+						onCreate={handleCreateLobby}
 					/>
 				{:else if games.length === 0}
 					<div class="py-12 text-center text-gray-500">

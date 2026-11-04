@@ -1,6 +1,8 @@
 <script lang="ts">
 	/** Nickname-based temporary session entry. */
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { inviteHome } from '$lib/invite';
 	import { getAuth } from '$lib/state/auth.svelte';
 
 	const auth = getAuth();
@@ -12,7 +14,7 @@
 	// Already authenticated users get redirected to home
 	$effect(() => {
 		if (!auth.loading && auth.isAuthenticated) {
-			goto('/');
+			goto(inviteHome(page.url.searchParams));
 		}
 	});
 
@@ -22,7 +24,6 @@
 		submitting = true;
 		try {
 			await auth.signIn(name);
-			goto('/');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Sign in failed';
 		} finally {

@@ -6,6 +6,9 @@
 	 * Unauthenticated users are redirected to the sign-in page.
 	 */
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { untrack } from 'svelte';
+	import { inviteId, inviteHome, enterInvite } from '$lib/invite';
 	import { getAuth } from '$lib/state/auth.svelte';
 	import { getLobbies, getGames, createLobby, joinLobby } from '$lib/api/lobby';
 	import LobbyList from '../components/lobby/LobbyList.svelte';
@@ -30,16 +33,36 @@
 	// Auth guard: redirect to sign-in if not authenticated
 	$effect(() => {
 		if (!auth.loading && !auth.isAuthenticated) {
-			goto('/auth/signin');
+			const destination = inviteHome(page.url.searchParams);
+			goto(destination === '/' ? '/auth/signin' : `/auth/signin${destination.slice(1)}`);
 		}
 	});
 
 	// Load lobbies and games once auth is confirmed
 	$effect(() => {
 		if (auth.isAuthenticated) {
-			loadData();
+			untrack(initialize);
 		}
 	});
+
+	async function initialize() {
+		const params = page.url.searchParams;
+		const id = inviteId(params);
+		const hasInvite = params.has('join');
+		const nickname = auth.user?.name?.trim();
+		// Consume before requesting: failures and leaving the room must not auto-join again.
+		if (hasInvite) await goto('/', { replaceState: true, noScroll: true });
+		await loadData();
+		if (!hasInvite) return;
+		if (!id) { error = 'Invalid lobby invitation'; return; }
+		if (!nickname) { error = 'Enter a valid nickname'; return; }
+		try {
+			isLobbyOwner = await enterInvite(id, nickname);
+			inLobbyId = id;
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to join lobby';
+		}
+	}
 
 	/** Fetches both lobby and game lists in parallel and updates reactive state. */
 	async function loadData() {

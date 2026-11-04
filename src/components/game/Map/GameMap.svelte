@@ -8,6 +8,7 @@
 	import type { Region } from '$lib/types/game';
 	import type { PhaseType } from '$lib/types/game';
 	import type { MapLayer, MapLink, Continent as ContinentType } from '$lib/types/map';
+	import { formatContinentName } from '$lib/utils/format';
 	import Continent from './Continent.svelte';
 
 	interface Props {
@@ -22,7 +23,7 @@
 		continentBorderRegions: Set<string>;
 		controlledContinents: Map<
 			string,
-			{ ownerId: string; bonusTroops: number; continentName: string }
+			{ ownerId: string; ownerName?: string; bonusTroops: number; continentName: string }
 		>;
 		currentPhase: PhaseType | null;
 		sourceRegionId: string | null;
@@ -232,9 +233,9 @@
 
 <div
 	bind:this={containerEl}
-	class="relative h-full w-full touch-none overflow-hidden"
+	class="relative h-full w-full overflow-hidden"
 	class:grabbing={mouseDrag?.moved}
-	role="img"
+	role="region"
 	aria-label="Mapa da partida"
 	onpointerdown={handlePointerDown}
 	onpointermove={handlePointerMove}
@@ -246,10 +247,33 @@
 	ontouchend={handleTouchEnd}
 	onwheel={handleWheel}
 >
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+	<aside
+		role="region"
+		aria-label="Bônus de tropas por continente"
+		tabindex="0"
+		class="absolute left-2 top-2 z-10 max-h-[42%] max-w-[min(13rem,48%)] touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-surface-900/85 p-2 text-xs text-gray-200 shadow-lg backdrop-blur-sm sm:left-3 sm:top-3 sm:max-h-[55%] sm:p-3"
+		onpointerdown={(event) => event.stopPropagation()}
+		onpointermove={(event) => event.stopPropagation()}
+		onwheel={(event) => event.stopPropagation()}
+		ontouchstart={(event) => event.stopPropagation()}
+		ontouchmove={(event) => event.stopPropagation()}
+	>
+		<h2 class="mb-1.5 font-semibold text-amber-200">Bônus por continente</h2>
+		<ul class="space-y-1">
+			{#each continents as continent (continent.id)}
+				{@const controller = controlledContinents.get(continent.id)}
+				<li class="flex items-center justify-between gap-3">
+					<span class="truncate">{formatContinentName(continent.name)}{controller ? ` · ${controller.ownerName ?? 'controlado'}` : ''}</span>
+					<span class="shrink-0 font-bold text-amber-300" aria-label={`${continent.bonus_troops} tropas de bônus`}>+{continent.bonus_troops}</span>
+				</li>
+			{/each}
+		</ul>
+	</aside>
 	<svg
 		bind:this={svgEl}
 		{viewBox}
-		class="h-full w-full"
+		class="h-full w-full touch-none"
 		preserveAspectRatio="xMidYMid meet"
 		xmlns="http://www.w3.org/2000/svg"
 		style="transform: translate({translateX}px, {translateY}px) scale({scale}); transform-origin: center;"

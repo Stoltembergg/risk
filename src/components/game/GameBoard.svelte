@@ -233,7 +233,7 @@
 	const controlledContinents = $derived.by(() => {
 		const result = new Map<
 			string,
-			{ ownerId: string; bonusTroops: number; continentName: string }
+			{ ownerId: string; ownerName?: string; bonusTroops: number; continentName: string }
 		>();
 		if (!game.boardState || !mapData.loaded) return result;
 		for (const continent of mapData.continents) {
@@ -250,6 +250,7 @@
 			if (allOwned) {
 				result.set(continent.id, {
 					ownerId,
+					ownerName: game.playersState?.players.find((player) => player.userId === ownerId)?.name,
 					bonusTroops: continent.bonus_troops,
 					continentName: continent.name
 				});
